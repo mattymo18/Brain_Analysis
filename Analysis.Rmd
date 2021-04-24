@@ -1,0 +1,30 @@
+---
+title: |
+  | Brain Connectome Analysis:
+  | Subtitle HERE
+author:   |
+  | Christina Cai
+  | MJimin Choi
+  | Matt Johnson
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Abstract
+--------
+
+Introduction
+------------
+
+Methodology
+-----------
+
+Results
+-------
+
+Conclusion
+----------
