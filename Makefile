@@ -21,7 +21,8 @@ Analysis.pdf:\
 	
 #clean traits
 derived_data/Clean.Traits.csv:\
- Source_Data/traits/175traits/HCP_175Traits.mat\
- Source_Data/traits/175traits/Details_175_Traits.xls\
+ Source_Data/traits/table1_hcp.csv\
+ Source_Data/traits/table2_hcp.csv\
+ Source_Data/traits/HCP_S1200_DataDictionary_Sept_18_2017.xls\
  tidy_traits.R
 	Rscript tidy_traits.R
