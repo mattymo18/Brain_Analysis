@@ -18,3 +18,10 @@ clean:
 Analysis.pdf:\
  Analysis.Rmd
 	R -e "rmarkdown::render('Analysis.Rmd')"
+	
+#clean traits
+derived_data/Clean.Traits.csv:\
+ Source_Data/traits/175traits/HCP_175Traits.mat\
+ Source_Data/traits/175traits/Details_175_Traits.xls\
+ tidy_traits.R
+	Rscript tidy_traits.R

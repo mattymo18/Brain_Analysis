@@ -2,3 +2,4 @@ FROM rocker/verse
 MAINTAINER Matt Johnson <johnson.matt1818@gmail.com>
 #For R
 RUN R -e "install.packages('R.matlab')"
+RUN R -e "install.packages('readxl')"
