@@ -75,4 +75,4 @@ clean.traits <- full_join(table1.interest, table2.interest)
 
 #awesome now lets save this
 
-write.csv(clean.traits, "derived_data/Clean.Traits.csv")
+write.csv(clean.traits, "derived_data/Clean.Traits.csv", row.names = F)
