@@ -71,7 +71,7 @@ table1.interest <- traits.table1[, c("Subject", table1.names)]
 
 #now to make a clean traits table we can cbind them on subject
 
-clean.traits <- full_join(table1.interest, table2.interest)
+clean.traits <- na.omit(full_join(table1.interest, table2.interest))
 
 #awesome now lets save this
 
