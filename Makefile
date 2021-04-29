@@ -26,3 +26,14 @@ derived_data/Clean.Traits.csv:\
  Source_Data/traits/HCP_S1200_DataDictionary_Sept_18_2017.xls\
  tidy_traits.R
 	Rscript tidy_traits.R
+	
+#clean PCA data
+derived_data/SC.PCA.clean.csv\
+derived_data/FC.PCA.clean.csv:\
+ derived_data/Clean.Traits.csv\
+ Source_Data/TNPCA_Result/TNPCA_Coeff_HCP_Structural_Connectome.mat\
+ Source_Data/TNPCA_Result/TNPCA_Coeff_HCP_Functional_Connectome.mat\
+ Source_Data/SC/HCP_cortical_DesikanAtlas_SC.mat\
+ Source_Data/FC/HCP_cortical_DesikanAtlas_FC.mat\
+ tidy_data.R
+	Rscript tidy_data.R
