@@ -5,26 +5,61 @@ date: "4/24/2021"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+
+# What to do  : Show difference of subject of our interest (drug) 
+# We have 1206 subject but there are only 1065 subject's MRI data
+# Set library and path 
+
+```{r}
+library(tidyverse)
+library(R.matlab)
+
+setwd("C:/Users/jimin/Brain_Analysis")
 ```
 
-## R Markdown
+# Open function/ structure connectcome data
+# Two large list with - all.id (1065) hcp.sc.count(68* 68 *1065)
+# Extract subject with trait 
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+```{r}
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+func.con<- readMat("Source_Data//HCP_cortical_DesikanAtlas_FC.mat")
+str.con<- readMat("Source_Data//HCP_cortical_DesikanAtlas_SC.mat")
 
-```{r cars}
-summary(cars)
+clean.traits <- read.csv('derived_data/Clean.Traits.csv')
+
+#Find drug user subject id
+drug.subject<-clean.traits %>% filter(Cocaine == "true" | THC == "true" | Opiates == "true" | Amphetamines == "true" | MethAmphetamine =="true" | Oxycontin == "true") 
+
+
+#drug user's functional connectome :  hcp.cortical.fc list  
+drug.fc <- func.con$hcp.cortical.fc[func.con$subj.list %in% drug.subject$Subject]
+
+#drug user's structure connectome : hcp.count list  
+drug.sc <- str.con$hcp.count[str.con$all.id %in% drug.subject$Subject]
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
+# So there are 133 subject
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+#### Things to discuss 
+# How to compare these two group (Drug user / Non-drug user)? 
+# How to convert this matrix data to the network data? fc and sc (I'll try) 
+
+
+```{r}
+# make a plot with the first subject data
+# I'm not sure this plot is useful.
+fc.matrix<-as.data.frame(drug.fc[[1]])
+rownames(fc.matrix) = seq(1:68)  
+colnames(fc.matrix) = seq(1:68)
+dt <- fc.matrix %>%
+  rownames_to_column() %>%
+  gather(colname, value, -rowname) 
+dt<-apply(dt,2,as.numeric)
+dt<-as.data.frame(dt)
+
+ggplot(dt,mapping= aes(x = rowname, y = colname, fill = value))+geom_tile()+labs(title = "Drug user Functional Connectcome") +scale_y_continuous(labels = paste0("ROI-",seq(1,68,by=5)),breaks = seq(1,68,by=5),limits=c(1,68)) +xlab("X") +ylab("ROI-1 to ROI-68")
+
+
 ```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
