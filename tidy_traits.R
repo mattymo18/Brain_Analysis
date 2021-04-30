@@ -76,3 +76,5 @@ clean.traits <- na.omit(full_join(table1.interest, table2.interest))
 #awesome now lets save this
 
 write.csv(clean.traits, "derived_data/Clean.Traits.csv", row.names = F)
+
+print("Trait Data Cleaned")
