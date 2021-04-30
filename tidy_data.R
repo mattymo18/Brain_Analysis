@@ -50,13 +50,18 @@ print("TNPCA Data Cleaned")
 #we can easily extract the subject ids and vectorize it
 FC.Subjects.list <- c(FC$subj.list)
 
+#set up an empty matrix to fill, should not contain the 
+#diag entries so we need to add 1-67 instead of 1-68 for 
+#the number of cols needed for the whole upp triangle matrix as a vector 
+#minus the diag part which has length 68
 FC.MAT <- matrix(0, nrow = length(FC.Subjects.list), ncol = sum(1:67))
 #then try to populate the matrix with the upper triangle
 for (i in 1:length(FC.Subjects.list)) {
   mat = matrix(unlist(FC$hcp.cortical.fc[[i]]), ncol = 68)
   #found this issue where some of the hcp.cortical.fc matrices are empty
+  #we can use an if to handle it and just put NAs
   if (nrow(mat) == 0) {
-    FC.MAT[i, ] = rep(0, sum(1:67))
+    FC.MAT[i, ] = rep(NA, sum(1:67))
   } else {
     #now we don't want the diag entries
     mat[lower.tri(mat, diag = T)] = NA
@@ -88,7 +93,7 @@ SC.Subjects.list <- c(SC$all.id)
 SC.MAT <- matrix(0, nrow = length(SC.Subjects.list), ncol = sum(1:67))
 for (i in 1:length(SC.Subjects.list)) {
   mat = matrix(SC$hcp.sc.count[, , i], ncol = 68)
-  #fix missing data issue
+  #fix missing data issue with NAs
   if(nrow(mat) == 0) {
     SC.MAT[i, ] = rep(NA, sum(1:67))
   } else {
