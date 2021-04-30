@@ -27,7 +27,9 @@ derived_data/Clean.Traits.csv:\
  tidy_traits.R
 	Rscript tidy_traits.R
 	
-#clean PCA data
+#clean data
+derived_data/SC.clean.csv\
+derived_data/FC.clean.csv\
 derived_data/SC.PCA.clean.csv\
 derived_data/FC.PCA.clean.csv:\
  derived_data/Clean.Traits.csv\
