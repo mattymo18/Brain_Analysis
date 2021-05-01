@@ -79,7 +79,8 @@ FC.clean.temp <- FC.DF %>%
   select(Subject, everything())
 
 #finally join with traits
-FC.clean <- left_join(FC.clean.temp, Traits.clean, by = "Subject")
+#found some NA's we can remove them here
+FC.clean <- na.omit(left_join(FC.clean.temp, Traits.clean, by = "Subject"))
 
 #now similar thing for SC
 
@@ -111,8 +112,8 @@ SC.DF$Subject <- SC.Subjects.list
 SC.clean.temp <- SC.DF %>% 
   select(Subject, everything())
 
-#finally join with traits
-SC.clean <- left_join(SC.clean.temp, Traits.clean, by = "Subject")
+#finally join with traits and remove NAs
+SC.clean <- na.omit(left_join(SC.clean.temp, Traits.clean, by = "Subject"))
 
 #now save the clean dataframes
 
