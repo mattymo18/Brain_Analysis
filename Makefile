@@ -39,3 +39,10 @@ derived_data/FC.PCA.clean.csv:\
  Source_Data/FC/HCP_cortical_DesikanAtlas_FC.mat\
  tidy_data.R
 	Rscript tidy_data.R
+	
+#JCoupling work
+derived_data/Druguser.cp.csv:\
+ derived_data/FC.clean.csv\
+ derived_data/SC.clean.csv\
+ Coupling_data.R
+	Rscript Coupling_data.R
