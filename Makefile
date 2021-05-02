@@ -46,3 +46,10 @@ derived_data/Druguser.cp.csv:\
  derived_data/SC.clean.csv\
  Coupling_data.R
 	Rscript Coupling_data.R
+	
+#prelim plots
+prelim_graphics/Drug.Histograms.png:\
+ derived_data/Clean.Traits.csv\
+ derived_data/Druguser.cp.csv\
+ tidy_eda_plots.R
+	Rscript tidy_eda_plots.R
