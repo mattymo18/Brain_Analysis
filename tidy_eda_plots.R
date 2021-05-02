@@ -69,7 +69,7 @@ p4 <- DF %>%
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
-title <- textGrob("FC and SC Coupling Factor", gp = gpar(fontface = "bold", cex = 1.5))
+title <- textGrob("FC and SC Coupling Factor & Substance Abuse", gp = gpar(fontface = "bold", cex = 1.5))
 plot1 <- grid.arrange(p1, p2, p3, p4, nrow = 2, 
                       top = title)
 
