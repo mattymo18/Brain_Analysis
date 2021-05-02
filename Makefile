@@ -40,7 +40,7 @@ derived_data/FC.PCA.clean.csv:\
  tidy_data.R
 	Rscript tidy_data.R
 	
-#JCoupling work
+#Coupling work
 derived_data/Druguser.cp.csv:\
  derived_data/FC.clean.csv\
  derived_data/SC.clean.csv\
