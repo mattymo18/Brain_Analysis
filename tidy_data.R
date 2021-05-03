@@ -39,8 +39,8 @@ SC.PCA.clean <- left_join(SC.PCA.clean.temp, Traits.clean, by = "Subject")
 
 #now save the clean dataframes
 
-write.csv(FC.PCA.clean, "derived_data/FC.PCA.clean.csv")
-write.csv(SC.PCA.clean, "derived_data/SC.PCA.clean.csv")
+write.csv(FC.PCA.clean, "derived_data/FC.PCA.clean.csv", row.names = F)
+write.csv(SC.PCA.clean, "derived_data/SC.PCA.clean.csv", row.names = F)
 
 print("TNPCA Data Cleaned")
 #ok now we will work on FC and SC
@@ -117,7 +117,7 @@ SC.clean <- na.omit(left_join(SC.clean.temp, Traits.clean, by = "Subject"))
 
 #now save the clean dataframes
 
-write.csv(FC.clean, "derived_data/FC.clean.csv")
-write.csv(SC.clean, "derived_data/SC.clean.csv")
+write.csv(FC.clean, "derived_data/FC.clean.csv", row.names = F)
+write.csv(SC.clean, "derived_data/SC.clean.csv", row.names = F)
 
 print("SC and FC Matrix Data Cleaned")
