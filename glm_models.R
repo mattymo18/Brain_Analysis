@@ -44,6 +44,8 @@ model.data$mari.user[model.data$Subject %in% mari.user$Subject] = 1
 model.data$mari.user <- as.factor(model.data$mari.user) #581 users
 
 model.data <- left_join(model.data, alc, by = "Subject") # levels 
+model.data$SSAGA_Alc_D4_Ab_Dx<-as.factor(model.data$SSAGA_Alc_D4_Ab_Dx)
+model.data$SSAGA_Alc_D4_Dp_Dx<-as.factor(model.data$SSAGA_Alc_D4_Dp_Dx)
 
 #Save the data for model first
 
@@ -51,6 +53,7 @@ write.csv(model.data, "derived_data/model_data.csv")
 
 # GLM
 
+model.data<-na.omit(model.data) #1 NA 
 #Hard drug model 
 hard.drug.dat <- model.data[,-(64:66)]
 hard.drug.mod <- glm(hard.drug~.-Subject,data =drug.dat,family = binomial )
@@ -65,9 +68,19 @@ summary(mari.mod)
 #Alcohol user 
 acl.dat <- model.data[,-c(63,64)]
 
-acl.abuse.mod <-glm(SSAGA_Alc_D4_Ab_Dx~.-Subject-SSAGA_Alc_D4_Dp_Dx,data = acl.dat, family = poisson)
+acl.abuse.mod <-glm(SSAGA_Alc_D4_Ab_Dx~.-Subject-SSAGA_Alc_D4_Dp_Dx,data = acl.dat, family = binomial)
 summary(acl.abuse.mod)
 
-acl.dep.mod <- glm(SSAGA_Alc_D4_Dp_Dx~.-Subject-SSAGA_Alc_D4_Ab_Dx,data = acl.dat, family = poisson)
+acl.dep.mod <- glm(SSAGA_Alc_D4_Dp_Dx~.-Subject-SSAGA_Alc_D4_Ab_Dx,data = acl.dat, family = binomial)
 summary(acl.dep.mod)
+
+
+#AIC
+
+model.aic<-c(hard.drug.mod$aic,mari.mod$aic,acl.abuse.mod$aic,acl.dep.mod$aic)
+model.aic
+
+
+
+
 
