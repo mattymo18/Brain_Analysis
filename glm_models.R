@@ -1,3 +1,13 @@
+## 
+set.seed(893)
+
+library(tidyverse)
+library(caret)
+library(epiDisplay)
+library(pROC)
+
+clean.traits<-read.csv("derived_data/Clean.Traits.csv")
+
 ##Modeling 
 
 
@@ -20,18 +30,17 @@ FC.tnpca<-FC.tnpca[,-1]
 SC.tnpca<-SC.tnpca[,-1]
 coupling<-coupling[,-1]
 
-# Join and make big data frame 
-
-full.data <- left_join(coupling, FC ,by="Subject")
 
 # Make a data for modeling with Subject, coupling, TNPCA.FC, TNPCA.SC, dummy variables for traits
 mod.data<-left_join(coupling,FC.tnpca, by = "Subject")
+
+mod.data.sc<-left_join(coupling,SC.tnpca,by = "Subject")
 
 hard.drug.user <- mod.data %>% filter(Cocaine == "true" | THC == "true"| Opiates == "true"|Amphetamines == "true"
                                       | MethAmphetamine == "true" | Oxycontin == "true")
 
 mari.user <- mod.data %>% filter(SSAGA_Mj_Use == 1)
-alc <- mod.data %>% select(Subject, SSAGA_Alc_D4_Ab_Dx, SSAGA_Alc_D4_Dp_Dx)
+alc <- mod.data %>% dplyr::select(Subject, SSAGA_Alc_D4_Ab_Dx, SSAGA_Alc_D4_Dp_Dx)
 
 
 model.data<-mod.data[,1:62]
@@ -47,16 +56,22 @@ model.data <- left_join(model.data, alc, by = "Subject") # levels
 model.data$SSAGA_Alc_D4_Ab_Dx<-as.factor(model.data$SSAGA_Alc_D4_Ab_Dx)
 model.data$SSAGA_Alc_D4_Dp_Dx<-as.factor(model.data$SSAGA_Alc_D4_Dp_Dx)
 
+
+#Make model data with tnpca.sc
+temp <- model.data %>% dplyr::select(Subject, hard.drug, mari.user, SSAGA_Alc_D4_Ab_Dx,SSAGA_Alc_D4_Dp_Dx)
+model.data.sc <-left_join(mod.data.sc[,1:62],temp, by = "Subject") 
+
 #Save the data for model first
 
-write.csv(model.data, "derived_data/model_data.csv")
+write.csv(model.data, "derived_data/model_data_TNPCA_FC.csv",row.names = FALSE)
+write.csv(model.data.sc, "derived_data/model_data_TNPCA_SC.csv",row.names = FALSE)
 
 # GLM
 
 model.data<-na.omit(model.data) #1 NA 
 #Hard drug model 
 hard.drug.dat <- model.data[,-(64:66)]
-hard.drug.mod <- glm(hard.drug~.-Subject,data =drug.dat,family = binomial )
+hard.drug.mod <- glm(hard.drug~.-Subject,data =hard.drug.dat,family = binomial )
 summary(hard.drug.mod) # coupling PC3,15,33
 
 
@@ -66,19 +81,100 @@ mari.mod <- glm(mari.user ~ .-Subject, data = mari.dat, family = binomial)
 summary(mari.mod)
 
 #Alcohol user 
-acl.dat <- model.data[,-c(63,64)]
+alc.dat <- model.data[,-c(63,64)]
 
-acl.abuse.mod <-glm(SSAGA_Alc_D4_Ab_Dx~.-Subject-SSAGA_Alc_D4_Dp_Dx,data = acl.dat, family = binomial)
-summary(acl.abuse.mod)
+alc.abuse.mod <-glm(SSAGA_Alc_D4_Ab_Dx~.-Subject-SSAGA_Alc_D4_Dp_Dx,data = alc.dat, family = binomial)
+summary(alc.abuse.mod)
 
-acl.dep.mod <- glm(SSAGA_Alc_D4_Dp_Dx~.-Subject-SSAGA_Alc_D4_Ab_Dx,data = acl.dat, family = binomial)
-summary(acl.dep.mod)
+alc.dep.mod <- glm(SSAGA_Alc_D4_Dp_Dx~.-Subject-SSAGA_Alc_D4_Ab_Dx,data = alc.dat, family = binomial)
+summary(alc.dep.mod)
 
 
 #AIC
 
-model.aic<-c(hard.drug.mod$aic,mari.mod$aic,acl.abuse.mod$aic,acl.dep.mod$aic)
+model.aic<-c(hard.drug.mod$aic,mari.mod$aic,alc.abuse.mod$aic,alc.dep.mod$aic)
 model.aic
+
+## It seems that there are striking difference in hard drug user and alcohol dp.
+## Find Auc for four models  
+
+#Auc for hard drug user model
+res.hard <-lroc(hard.drug.mod)
+
+res.mari <-lroc(mari.mod)
+
+res.alc.ab<-lroc(alc.abuse.mod)
+
+#Auc for alc dependence model 
+res.alc.dep <- lroc(alc.dep.mod)
+
+model.auc<-c(res.hard$auc, res.mari$auc,res.alc.ab$auc,res.alc.dep$auc)
+model.auc
+
+
+
+
+##############################################glm model with coupling and TNPCA SC 
+model.data.sc<-na.omit(model.data.sc) 
+#Hard drug model 
+hard.drug.dat.sc <- model.data.sc[,-(64:66)]
+hard.drug.mod.sc <- glm(hard.drug~.-Subject,data =hard.drug.dat.sc,family = binomial )
+summary(hard.drug.mod.sc) # coupling PC3,15,33
+
+
+##Marijuana model 
+mari.dat.sc <- model.data.sc[,-c(63,65,66)]
+mari.mod.sc <- glm(mari.user ~ .-Subject, data = mari.dat.sc, family = binomial)
+summary(mari.mod.sc)
+
+#Alcohol user 
+alc.dat.sc <- model.data.sc[,-c(63,64)]
+
+alc.abuse.mod.sc <-glm(SSAGA_Alc_D4_Ab_Dx~.-Subject-SSAGA_Alc_D4_Dp_Dx,data = alc.dat.sc, family = binomial)
+summary(alc.abuse.mod.sc)
+
+alc.dep.mod.sc <- glm(SSAGA_Alc_D4_Dp_Dx~.-Subject-SSAGA_Alc_D4_Ab_Dx,data = alc.dat.sc, family = binomial)
+summary(alc.dep.mod.sc)
+
+
+#AIC
+
+model.aic.sc<-c(hard.drug.mod.sc$aic,mari.mod.sc$aic,alc.abuse.mod.sc$aic,alc.dep.mod.sc$aic)
+model.aic.sc
+
+## It seems that there are striking difference in hard drug user and alcohol dp.
+## Find Auc for four models  
+
+#Auc for hard drug user model
+res.hard.sc <-lroc(hard.drug.mod.sc)
+
+res.mari.sc <-lroc(mari.mod.sc)
+
+res.alc.ab.sc<-lroc(alc.abuse.mod.sc)
+
+#Auc for alc dependence model 
+res.alc.dep.sc <- lroc(alc.dep.mod.sc)
+
+model.auc.sc<-c(res.hard.sc$auc, res.mari.sc$auc,res.alc.ab.sc$auc,res.alc.dep.sc$auc)
+model.auc.sc
+
+
+
+
+
+
+#################### Final conclusion
+print("Final conclusion with coupling & TNPCA.FC")
+model.aic
+model.auc
+
+print("Final conclusion with coupling & TNPCA.SC")
+model.aic.sc
+model.auc.sc
+
+
+
+
 
 
 
