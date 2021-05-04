@@ -29,6 +29,22 @@ substance <- trait.dict %>%
 # Participant meets DSM4 criteria for Alcohol Abuse: SSAGA_Alc_D4_Ab_Dx
 # Participant meets DSM4 criteria for DSM4 Alcohol Dependence: SSAGA_Alc_D4_Dp_Dx
 
+#Turns out I want some more traits, so we can add some more below
+#For alcohol we also want: Total_Drinks_7days, 
+#SSAGA_Alc_12_Frq: Frequency of any alcohol use in past 12 months:  
+#4-7 days/week (1 if male, 2 if female), 
+#3 days/week = 2, 
+#2 days/week = 3, 
+#1 day/week = 4, 
+#1-3 days month = 5, 
+#1-11 days/year = 6, 
+#never in past 12 months = 7
+
+#SSAGA_Alc_12_Frq_Drk: Frequency drunk in past 12 months: 
+#1-7 days/week = 1 if male, 2 if female, 
+#1-3 days/month = 2, 
+#1-11 days/year = 3, never = 4 
+
 #I don't think looking at tobacco is as interesting as harder drugs, so lets skip that
 
 #marijuana
@@ -41,7 +57,8 @@ substance.interest <- substance %>%
            columnHeader == "Amphetamines" | columnHeader == "MethAmphetamine" |
            columnHeader == "Oxycontin" | columnHeader == "SSAGA_Alc_D4_Ab_Dx" |
            columnHeader == "SSAGA_Alc_D4_Dp_Dx" | columnHeader == "SSAGA_Mj_Use" |
-           columnHeader == "SSAGA_Mj_Ab_Dep")
+           columnHeader == "SSAGA_Mj_Ab_Dep" | columnHeader == "Total_Drinks_7days" |
+           columnHeader == "SSAGA_Alc_12_Frq" | columnHeader == "SSAGA_Alc_12_Frq_Drk")
 column.header.list.substance <- substance.interest$columnHeader
 
 
