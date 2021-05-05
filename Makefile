@@ -41,7 +41,7 @@ derived_data/FC.PCA.clean.csv:\
 	Rscript tidy_data.R
 	
 #Coupling work
-derived_data/Druguser.cp.csv:\
+derived_data/Coupling.csv:\
  derived_data/FC.clean.csv\
  derived_data/SC.clean.csv\
  Coupling_data.R
@@ -53,3 +53,14 @@ prelim_graphics/Drug.Histograms.png:\
  derived_data/Druguser.cp.csv\
  tidy_eda_plots.R
 	Rscript tidy_eda_plots.R
+	
+#modeling data cleaner
+derived_data/model_data_TNPCA_FC.csv\
+derived_data/model_data_TNPCA_SC.csv:\
+ derived_data/FC.clean.csv\
+ derived_data/SC.clean.csv\
+ derived_data/FC.PCA.clean.csv\
+ derived_data/SC.PCA.clean.csv\
+ derived_data/Coupling.csv\
+ tidy_model_data.R
+	Rscript tidy_model_data.R

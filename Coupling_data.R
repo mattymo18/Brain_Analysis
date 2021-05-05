@@ -11,10 +11,6 @@ library(tidyverse)
 FC.clean <- read.csv("derived_data/FC.clean.csv")
 SC.clean <- read.csv("derived_data/SC.clean.csv")
 
-#Remove first column x in each csv file
-FC.clean <- FC.clean[,-1]
-SC.clean <- SC.clean[,-1]
-
 # Leave only FC and SC value for coupling
 FC <- FC.clean[,1:2279]
 SC <- SC.clean[,1:2279]
@@ -56,4 +52,5 @@ for( i in 1: nrow(FC)){
 regional.cp <- cbind(FC[,1],regional.cp) 
 colnames(regional.cp) <- c("Subject", "coupling")
 
-write.csv(regional.cp, "derived_data/Druguser.cp.csv", row.names = F)
+write.csv(regional.cp, "derived_data/Coupling.csv", row.names = F)
+print("Coupling Data Generated")
