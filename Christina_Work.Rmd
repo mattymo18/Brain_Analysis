@@ -5,26 +5,67 @@ date: "4/24/2021"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(rgl)
+
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r}
+#for embedding interative 3d plot in html
+library(knitr)
+knit_hooks$set(webgl = hook_webgl)
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r}
+sc_pca = read.csv("derived_data/SC.PCA.clean.csv")
+fc_pca = read.csv("derived_data/SC.PCA.clean.csv")
+mod_fc_data = read.csv("derived_data/model_data_TNPCA_FC.csv")
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r}
+summary(fc_pca[,87:96])
+```
+
+```{r}
+table(fc_pca$SSAGA_Mj_Ab_Dep)
+```
+
+```{r}
+#sample 50 subject from marijuana abuse and non abuse for making plots
+
+mari_abuse<-fc_pca %>%
+  drop_na(SSAGA_Mj_Ab_Dep)%>%
+  rename(mj_ab = SSAGA_Mj_Ab_Dep)%>%
+  mutate(mj_ab = factor(mj_ab))%>%
+  group_by(mj_ab)%>%
+  sample_n(50)
+```
+
+```{r}
+#make 2d scatter with pc1 and pc2
+
+ggplot(mari_abuse,aes(x = PC1,y = PC2,color = mj_ab)) + geom_point()+
+  labs(color = "Marijuana Abuser?")+
+  scale_color_manual(labels = c("non mj abuser","mj abuser"),values = c("#F8766D","#00BFC4"))
+```
+
+```{r,webgl=TRUE, results='hide'}
+mycolors <- c('royalblue1', 'darkcyan')
+par(mar=c(0,0,0,0))
+mari_abuse$color <- mycolors[ as.numeric(mari_abuse$mj_ab) ]
+plot3d(x = mari_abuse$PC1,y = mari_abuse$PC2,z = mari_abuse$PC3,col = mari_abuse$color,
+        xlab="PC1 Score", ylab="PC2 Score", zlab="PC3 Score",)
+legend3d("topright", legend = c('Non MJ abusers','MJ abusers'),col = mycolors)
+```
+
+The plot is not particularly interesting. Could be that MJ abuse doesn't correspond to different brain structures.
+
+Do graph for alcohol abusers
+
+```{r}
+#sample 50 users from alcohol
+```
+
