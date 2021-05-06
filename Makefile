@@ -64,3 +64,19 @@ derived_data/model_data_TNPCA_SC.csv:\
  derived_data/Coupling.csv\
  tidy_model_data.R
 	Rscript tidy_model_data.R
+	
+#GLM FC ROC cruves and results
+derived_graphics/FC_ROC_Curve_Alc.png\
+derived_graphics/FC_ROC_Curve_MJ.png\
+derived_graphics/FC_ROC_Curve_Drug.png:\
+ derived_data/model_data_TNPCA_FC.csv\
+ glm_FC.R
+	Rscript glm_FC.R
+	
+#GLM SC ROC cruves and results
+derived_graphics/SC_ROC_Curve_Alc.png\
+derived_graphics/SC_ROC_Curve_MJ.png\
+derived_graphics/SC_ROC_Curve_Drug.png:\
+ derived_data/model_data_TNPCA_SC.csv\
+ glm_SC.R
+	Rscript glm_SC.R
