@@ -12,6 +12,13 @@ clean:
 	rm derived_models/*.rds
 	rm Analysis.pdf
 
+#phony target to run penalized_mods script for output
+.PHONY: penalized_mods
+
+penalized_mods:
+	Rscript penalized_mods_FC.R
+	Rscript penalized_mods_SC.R
+
 ################################################
 
 #builds final report	
