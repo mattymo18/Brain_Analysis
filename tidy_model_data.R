@@ -2,9 +2,6 @@
 set.seed(893)
 
 library(tidyverse)
-# library(caret)
-# # library(epiDisplay)
-# # library(pROC)
 
 clean.traits<-read.csv("derived_data/Clean.Traits.csv")
 
