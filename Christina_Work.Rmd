@@ -21,7 +21,7 @@ knit_hooks$set(webgl = hook_webgl)
 
 ```{r}
 sc_pca = read.csv("derived_data/SC.PCA.clean.csv")
-fc_pca = read.csv("derived_data/SC.PCA.clean.csv")
+fc_pca = read.csv("derived_data/FC.PCA.clean.csv")
 mod_fc_data = read.csv("derived_data/model_data_TNPCA_FC.csv")
 ```
 
@@ -66,6 +66,121 @@ The plot is not particularly interesting. Could be that MJ abuse doesn't corresp
 Do graph for alcohol abusers
 
 ```{r}
+summary(mod_fc_data[,61:65])
+#number in each class for hard drug, mari usem and alcohol
+table(mod_fc_data$hard.drug)
+table(mod_fc_data$mari.user)
+table(mod_fc_data$Alc)
+
+```
+
+```{r}
 #sample 50 users from alcohol
+alc_ab_sample <-mod_fc_data %>%
+  mutate(Alc = factor(Alc))%>%
+  group_by(Alc) %>%
+  sample_n(100)
+```
+
+```{r}
+ggplot(alc_ab_sample,aes(x = PC1,y = PC2,color = Alc)) + geom_point()+
+  labs(color = "Alcohol User?")+
+  scale_color_manual(labels = c("non alcohol user","alcohol abuser"),values = c("#F8766D","#00BFC4"))
+```
+
+# doesn;t look like anything
+
+```{r}
+library(caret)
+
+set.seed(893)
+#create train test split
+fc_train <- mod_fc_data %>%
+  select(-c(Subject,hard.drug,mari.user))%>%
+  mutate(Alc = factor(Alc))%>%
+  mutate(Alc = recode(Alc,"0" = "No","1"="Yes"))
+train = createDataPartition(y = fc_train$Alc,p = 0.8,list = FALSE)
+alc_train = fc_train[train,]
+alc_test = fc_train[-train,]
+#check if the split is stratified
+table(alc_train$Alc)
+table(alc_test$Alc)
+```
+
+```{r}
+#train a random forest first?
+#10-fold cv
+#random search over parameters mtry, which is the number of predictors given to each tree
+control <- trainControl(method = "cv",
+                        number = 5,
+                        summaryFunction = twoClassSummary,
+                        classProbs = TRUE,
+                        search = 'random')
+
+alc_rf_random <- train(Alc~.,
+                       data = alc_train,
+                       method = 'rf',
+                       metric = 'ROC',
+                       tuneLength = 15,
+                       trControl = control)
+print(alc_rf_random)
+```
+
+might have two problem at hand: too many parameters and inbalanced class
+only keep 20 most important variables?
+
+```{r}
+#ranking of variable importance based on overall performancce
+variable_importance <-varImp(alc_rf_random$finalModel,scale = FALSE)
+variable_importance <-tibble::rownames_to_column(variable_importance)
+variable_importance   %>%
+  arrange(desc(Overall))%>%
+  head(20)
+```
+
+```{r}
+#ROC of each variable for each class, sorted by ROC for class "YES"
+imortant_var <-filterVarImp(x = alc_train[,1:61],y = alc_train[,"Alc"])%>%
+  rownames_to_column()%>%
+  arrange(desc(Yes)) %>%
+  head(20)%>%
+  select(rowname)
+
+#random forest overall importance
+variable_importance <- variable_importance   %>%
+  arrange(desc(Overall))%>%
+  head(20)
+
+#try only using these variables for trainning
+alc_rf_imp_var <- train(Alc~.,
+                       data = alc_train[,c(variable_importance$rowname,"Alc")],
+                       method = 'rf',
+                       metric = 'ROC',
+                       tuneLength = 15,
+                       trControl = control)
+print(alc_rf_imp_var)
+```
+
+#use ROSE during re-sampling i.e in each iteration of CV
+
+ROSE(randomly over-sampling examples) creates a sample of synthetic data by enlarging the features space of minority and majority class examples. Operationally, the new examples are drawn from a conditional kernel density estimate of the two classes, as described in Menardi and Torelli (2013).
+
+```{r}
+#over sample with the entire data set
+#do it inside each CV iteration
+ROSE_control <- trainControl(method = "cv",
+                        number = 5,
+                        summaryFunction = twoClassSummary,
+                        classProbs = TRUE,
+                        search = 'random',
+                        sampling = "rose")
+
+alc_rf_ROSE <- train(Alc~.,
+                       data = alc_train,
+                       method = 'rf',
+                       metric = 'ROC',
+                       tuneLength = 15,
+                       trControl = ROSE_control)
+
 ```
 
