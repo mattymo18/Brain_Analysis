@@ -16,7 +16,6 @@ hard.drugs.test.fc <- hard.drugs.fc[-trainIndex, ]
 
 #build full glm with train
 hard.drug.fc.glm <- glm(hard.drug ~., data = hard.drugs.train.fc, family = "binomial")
-# summary(hard.drug.fc.glm)
 hard.drugs.fc.probs <- predict(hard.drug.fc.glm,
                                newdata = hard.drugs.test.fc %>% select(-hard.drug),
                                type = "response")
@@ -42,8 +41,6 @@ MJ.test.fc <- MJ.fc[-trainIndex, ]
 
 #build full glm with train
 MJ.fc.glm <- glm(mari.user ~., data = MJ.train.fc, family = "binomial")
-# summary(Alc.dep.fc.glm)
-#significant are coupling, PC17, PC25, PC32, 49, 53, 58
 MJ.fc.probs <- predict(MJ.fc.glm, 
                        newdata = MJ.test.fc %>% select(-mari.user), 
                        type = "response")
@@ -69,8 +66,6 @@ Alc.dep.test.fc <- Alc.dep.fc[-trainIndex, ]
 
 #build full glm with train
 Alc.dep.fc.glm <- glm(Alc ~., data = Alc.dep.train.fc, family = "binomial")
-# summary(Alc.dep.fc.glm)
-#significant are coupling, PC17, PC25, PC32, 49, 53, 58
 Alc.dep.fc.probs <- predict(Alc.dep.fc.glm, 
                             newdata = Alc.dep.test.fc %>% select(-Alc), 
                             type = "response")

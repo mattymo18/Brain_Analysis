@@ -16,7 +16,6 @@ hard.drugs.test.sc <- hard.drugs.sc[-trainIndex, ]
 
 #build full glm with train
 hard.drug.sc.glm <- glm(hard.drug ~., data = hard.drugs.train.sc, family = "binomial")
-# summary(hard.drug.fc.glm)
 hard.drugs.sc.probs <- predict(hard.drug.sc.glm,
                                newdata = hard.drugs.test.sc %>% select(-hard.drug),
                                type = "response")
@@ -42,8 +41,6 @@ MJ.test.sc <- MJ.sc[-trainIndex, ]
 
 #build full glm with train
 MJ.sc.glm <- glm(mari.user ~., data = MJ.train.sc, family = "binomial")
-# summary(Alc.dep.fc.glm)
-#significant are coupling, PC17, PC25, PC32, 49, 53, 58
 MJ.sc.probs <- predict(MJ.sc.glm, 
                        newdata = MJ.test.sc %>% select(-mari.user), 
                        type = "response")
@@ -69,8 +66,6 @@ Alc.dep.test.sc <- Alc.dep.sc[-trainIndex, ]
 
 #build full glm with train
 Alc.dep.sc.glm <- glm(Alc ~., data = Alc.dep.train.sc, family = "binomial")
-# summary(Alc.dep.fc.glm)
-#significant are coupling, PC17, PC25, PC32, 49, 53, 58
 Alc.dep.sc.probs <- predict(Alc.dep.sc.glm, 
                             newdata = Alc.dep.test.sc %>% select(-Alc), 
                             type = "response")
