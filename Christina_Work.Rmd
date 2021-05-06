@@ -9,7 +9,7 @@ output: html_document
 library(tidyverse)
 library(ggplot2)
 library(rgl)
-
+library(MLeval)
 ```
 
 ```{r}
@@ -23,6 +23,7 @@ knit_hooks$set(webgl = hook_webgl)
 sc_pca = read.csv("derived_data/SC.PCA.clean.csv")
 fc_pca = read.csv("derived_data/FC.PCA.clean.csv")
 mod_fc_data = read.csv("derived_data/model_data_TNPCA_FC.csv")
+mod_sc_data = read.csv("derived_data/model_data_TNPCA_SC.csv")
 ```
 
 ```{r}
@@ -88,7 +89,7 @@ ggplot(alc_ab_sample,aes(x = PC1,y = PC2,color = Alc)) + geom_point()+
   scale_color_manual(labels = c("non alcohol user","alcohol abuser"),values = c("#F8766D","#00BFC4"))
 ```
 
-# doesn;t look like anything
+# modeling alcohol on the FC data
 
 ```{r}
 library(caret)
@@ -172,15 +173,158 @@ ROSE_control <- trainControl(method = "cv",
                         number = 5,
                         summaryFunction = twoClassSummary,
                         classProbs = TRUE,
-                        search = 'random',
-                        sampling = "rose")
+                        sampling = "rose",
+                        search = 'random')
 
 alc_rf_ROSE <- train(Alc~.,
                        data = alc_train,
                        method = 'rf',
                        metric = 'ROC',
+                       tuneLength = 20,
+                       trControl = ROSE_control)
+print(alc_rf_ROSE)
+```
+
+```{r}
+alc_pred = predict(alc_rf_ROSE$finalModel,alc_test[,-ncol(alc_test)])
+confusionMatrix(alc_pred,alc_test[,ncol(alc_test)])
+```
+# variable importance and selection with the rose model
+```{r}
+var_imp_fc_rose <- varImp(alc_rf_ROSE$finalModel) %>%
+  tibble::rownames_to_column()%>%
+  arrange(desc(Overall))
+
+#very different result compared to not using rose
+#extract names of the 20 most important factors for subsequent use
+imp_var_fc_rose <-(var_imp_fc_rose %>% head(20))$rowname
+```
+
+```{r}
+var_imp_fc_rose %>%
+  filter(Overall >= mean(var_imp_fc_rose$Overall))
+```
+
+```{r}
+ROSE_control <- trainControl(method = "repeatedcv",
+                        number = 5,
+                        repeats = 3,
+                        summaryFunction = twoClassSummary,
+                        classProbs = TRUE,
+                        savePredictions = TRUE,
+                        sampling = "rose",
+                        search = 'random')
+
+#retrain the model with only "important" variables and rose
+alc_rf_ROSE_imp_var <- train(Alc~.,
+                       data = alc_train[,c(imp_var_fc_rose,"Alc")],
+                       method = 'rf',
+                       metric = 'AUC',
+                       tuneLength = 20,
+                       trControl = ROSE_control)
+print(alc_rf_ROSE_imp_var)
+```
+confusian matrix for all cv iterations
+```{r}
+confusionMatrix(alc_rf_ROSE_imp_var)
+```
+
+```{r}
+eval_auc_imp <-evalm(alc_rf_ROSE_imp_var)
+eval_auc_imp$stdres
+```
+
+# sanity test with trainning accuracy, are we underfitting or overfitting
+
+# trainning accuracy with all variables
+```{r}
+train_pred <- predict(alc_rf_ROSE$finalModel,alc_train[,-ncol(alc_train)])
+confusionMatrix(train_pred,alc_train$Alc)
+```
+
+# trainning accuracy with only 20 important variables
+```{r}
+train_pred <- predict(alc_rf_ROSE_imp_var$finalModel,alc_train[,imp_var_fc_rose])
+confusionMatrix(train_pred,alc_train$Alc)
+```
+Confusian matrix of only 20 important variables, averaged across all cv iterations
+```{r}
+confusionMatrix(alc_rf_ROSE_imp_var)
+```
+
+```{r}
+test_pred <- predict(alc_rf_ROSE_imp_var$finalModel,alc_test[,imp_var_fc_rose])
+confusionMatrix(test_pred,alc_test$Alc)
+```
+
+
+
+
+
+
+# Modeling alcohol use on the SC data
+```{r}
+set.seed(893)
+#create train test split
+sc_train <- mod_sc_data %>%
+  select(-c(Subject,hard.drug,mari.user))%>%
+  mutate(Alc = factor(Alc))%>%
+  mutate(Alc = recode(Alc,"0" = "No","1"="Yes"))
+train = createDataPartition(y = sc_train$Alc,p = 0.8,list = FALSE)
+alc_train_sc = sc_train[train,]
+alc_test_sc = sc_train[-train,]
+#check if the split is stratified
+table(alc_train_sc$Alc)
+table(alc_test_sc$Alc)
+```
+
+```{r}
+#10-fold cv
+#random search over parameters mtry, which is the number of predictors given to each tree
+#no oversampling
+control <- trainControl(method = "cv",
+                        number = 5,
+                        summaryFunction = twoClassSummary,
+                        classProbs = TRUE,
+                        search = 'random')
+
+sc_alc_rf_random<- train(Alc~.,
+                       data = alc_train_sc,
+                       method = 'rf',
+                       metric = 'ROC',
+                       tuneLength = 15,
+                       trControl = control)
+print(sc_alc_rf_random)
+```
+It seems that ROC are not improving regradless of what we do.
+
+
+# try again with ROSE
+
+```{r}
+sc_alc_rf_random<- train(Alc~.,
+                       data = alc_train_sc,
+                       method = 'rf',
+                       metric = 'ROC',
                        tuneLength = 15,
                        trControl = ROSE_control)
+print(sc_alc_rf_random)
+```
+
+# it seems that learning to identify who is alcohol abusers are even more difficult with the SC data set
+```{r}
+confusionMatrix(sc_alc_rf_random)
+```
+
+Speculations:
+
+1. Bundling varying levels of alcol use/dependency together added a lot of noise
+2. Random forest is a not a good algorithm for this problem
+
+# try modeling with hard drugs
+
+let's only work with FC data 
+```{r}
 
 ```
 
