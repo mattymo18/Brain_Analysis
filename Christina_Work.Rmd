@@ -181,18 +181,97 @@ glmnet_alc_rose_all <- train(Alc ~ .,
 print(glmnet_alc_rose_all)
 ```
 
-
+```{r}
+confusionMatrix(glmnet_alc_rose_all,mode = "prec_recall",positive = "Yes")
+```
 
 ```{r}
-x.test = model.matrix(~.-Alc,data = alc_test)[,-1]
-#it seems that oversampling is making
-ROSE::accuracy.meas(alc_test$Alc,predict(glmnet_alc_rose_all$finalModel,x.test,s = 0.006,type = "class"))
-  
+coef()
 ```
+
+recall = 0.5 , precision = 0.22
 
 ```{r}
 #would lowering minority class probability help?
+# lower minority class probability from 0.6 to 0.5
+less_rose <- list(name = "Less ROSE",
+                func = function (x, y) {
+                  library(ROSE)
+                  dat <- if (is.data.frame(x)) x else as.data.frame(x)
+                  dat$.y <- y
+                  dat <- ROSE(.y ~ ., data = dat, p = 0.4)$data
+                  list(x = dat[, !grepl(".y", colnames(dat), fixed = TRUE)], 
+                       y = dat$.y)
+                  },
+                first = TRUE)
+
+ROSE_control <- trainControl(method = "repeatedcv",
+                        number = 10,
+                        repeats = 3,
+                        summaryFunction = f1,
+                        classProbs = TRUE,
+                        sampling = less_rose)
+
+# relationship between alcohol and brain structure is a lot harder to learn
+glmnet_alc_rose_all <- train(Alc ~ .,
+                     data = alc_train,
+                     method = 'glmnet',
+                     metric = 'F1',
+                     tuneGrid = expand.grid(alpha = 1,lambda = seq(0.001,0.01,by = 0.0002)),
+                     trControl = ROSE_control)
+
+print(glmnet_alc_rose_all)
 ```
+
+
+```{r}
+confusionMatrix(glmnet_alc_rose_all)
+```
+recall decreased drastically while precision improved somewhat
+
+```{r}
+#what if we increased minority class probability
+more_rose <- list(name = "Less ROSE",
+                func = function (x, y) {
+                  library(ROSE)
+                  dat <- if (is.data.frame(x)) x else as.data.frame(x)
+                  dat$.y <- y
+                  dat <- ROSE(.y ~ ., data = dat, p = 0.8)$data
+                  list(x = dat[, !grepl(".y", colnames(dat), fixed = TRUE)], 
+                       y = dat$.y)
+                  },
+                first = TRUE)
+
+ROSE_control <- trainControl(method = "repeatedcv",
+                        number = 10,
+                        repeats = 3,
+                        summaryFunction = f1,
+                        classProbs = TRUE,
+                        sampling = more_rose)
+
+# relationship between alcohol and brain structure is a lot harder to learn
+glmnet_alc_rose_all <- train(Alc ~ .,
+                     data = alc_train,
+                     method = 'glmnet',
+                     metric = 'F1',
+                     tuneGrid = expand.grid(alpha = 1,lambda = seq(0.001,0.01,by = 0.0002)),
+                     trControl = ROSE_control)
+
+print(glmnet_alc_rose_all)
+```
+
+```{r}
+confusionMatrix(glmnet_alc_rose_all)
+```
+
+recall close to 100 percent while precision maintains around 20 %
+It seems that as minority class probability increase, we complete bias the model towards the minority class. The default is not so bad.
+
+30,31,56 seemed most important
+```{r}
+varImp(glmnet_alc_rose_all)
+```
+
 
 # Random Forest
 ```{r}
@@ -213,16 +292,16 @@ alc_rf_ROSE <- train(Alc~.,
                        trControl = ROSE_control)
 print(alc_rf_ROSE)
 ```
+not doing better than lasso
 
 ```{r}
-confusionMatrix(alc_rf_ROSE)
+#see trainning precision and recall for the best model
+#compared to validation F1 which is 0.30, seems to be overfitting
+rf_pred = predict(alc_rf_ROSE$finalModel,alc_train[,-ncol(alc_train)])
+confusionMatrix(rf_pred,alc_train[,ncol(alc_train)],positive = "Yes",mode = "prec_recall")
 ```
 
-```{r}
-alc_pred = predict(alc_rf_ROSE$finalModel,alc_test[,-ncol(alc_test)])
-confusionMatrix(alc_pred,alc_test[,ncol(alc_test)])
-```
-# variable importance and selection with the rose model
+# variable importance and selection with the rose model, maybe that would help with overfitting
 ```{r}
 var_imp_fc_rose <- varImp(alc_rf_ROSE$finalModel) %>%
   tibble::rownames_to_column()%>%
@@ -242,9 +321,8 @@ var_imp_fc_rose %>%
 ROSE_control <- trainControl(method = "repeatedcv",
                         number = 5,
                         repeats = 3,
-                        summaryFunction = twoClassSummary,
+                        summaryFunction = f1,
                         classProbs = TRUE,
-                        savePredictions = TRUE,
                         sampling = "rose",
                         search = 'random')
 
@@ -252,23 +330,14 @@ ROSE_control <- trainControl(method = "repeatedcv",
 alc_rf_ROSE_imp_var <- train(Alc~.,
                        data = alc_train[,c(imp_var_fc_rose,"Alc")],
                        method = 'rf',
-                       metric = 'AUC',
-                       tuneLength = 20,
+                       metric = 'F1',
+                       tuneLength = 15,
                        trControl = ROSE_control)
 print(alc_rf_ROSE_imp_var)
 ```
 confusian matrix for all cv iterations
 ```{r}
 confusionMatrix(alc_rf_ROSE_imp_var)
-```
-
-
-# sanity test with trainning accuracy, are we underfitting or overfitting
-
-# trainning accuracy with all variables
-```{r}
-train_pred <- predict(alc_rf_ROSE$finalModel,alc_train[,-ncol(alc_train)])
-confusionMatrix(train_pred,alc_train$Alc,mode = "prec_recall",positive = "Yes")
 ```
 
 # trainning accuracy with only 20 important variables
@@ -278,19 +347,13 @@ confusionMatrix(train_pred,alc_train$Alc,mode = "prec_recall",positive = "Yes")
 ```
 
 
-
-
-Confusian matrix of only 20 important variables, averaged across all cv iterations
-```{r}
-confusionMatrix(alc_rf_ROSE_imp_var)
-```
-
 ```{r}
 test_pred <- predict(alc_rf_ROSE_imp_var$finalModel,alc_test[,imp_var_fc_rose])
 confusionMatrix(test_pred,alc_test$Alc,mode = "prec_recall",positive = "Yes")
+ROSE::roc.curve(test_pred,alc_test$Alc)
 ```
 
-ROSE definitely seem to improve performance, but still not to a desired level
+The test recall is not that bad, but at the cost of low Precision
 
 
 
@@ -323,14 +386,14 @@ levels(drug_train$hard.drug)
 #no oversampling
 control <- trainControl(method = "cv",
                         number = 5,
-                        summaryFunction = twoClassSummary,
+                        summaryFunction = f1,
                         classProbs = TRUE,
                         search = 'random')
 
 sc_alc_rf_random<- train(Alc~.,
                        data = alc_train_sc,
                        method = 'rf',
-                       metric = 'ROC',
+                       metric = 'F1',
                        tuneLength = 15,
                        trControl = control)
 print(sc_alc_rf_random)
@@ -344,7 +407,7 @@ It seems that ROC are not improving regradless of what we do.
 sc_alc_rf_random<- train(Alc~.,
                        data = alc_train_sc,
                        method = 'rf',
-                       metric = 'ROC',
+                       metric = 'F1',
                        tuneLength = 15,
                        trControl = ROSE_control)
 print(sc_alc_rf_random)
@@ -382,13 +445,13 @@ table(drug_test$hard.drug)
 control <- trainControl(method = "repeatedcv",
                         number = 5,
                         repeats = 3,
-                        summaryFunction = twoClassSummary,
+                        summaryFunction = f1,
                         classProbs = TRUE,
                         search = 'random')
 
 rf_drug_all <- train(hard.drug ~ .,
                      data = drug_train,
-                     metric = 'ROC',
+                     metric = 'F1',
                      method = 'rf',
                      tuneLength = 15,
                      trControl = control)
@@ -400,35 +463,13 @@ print(rf_drug_all)
 
 actually let's try glmnet first
 ```{r}
-#wrapper for calculating F1 score during cross validation
-
-f1 <- function(data, lev = NULL, model = NULL) {
-        f1_val <- MLmetrics::F1_Score(y_pred = data$pred,
-                                      y_true = data$obs,
-                                      positive = lev[2])
-        c(F1 = f1_val)
-}
-
-
-# wrapper to control the portion of minority class during over sampling
-
-less_rose <- list(name = "Less ROSE",
-                func = function (x, y) {
-                  library(ROSE)
-                  dat <- if (is.data.frame(x)) x else as.data.frame(x)
-                  dat$.y <- y
-                  dat <- ROSE(.y ~ ., data = dat, p = 0.5)$data
-                  list(x = dat[, !grepl(".y", colnames(dat), fixed = TRUE)], 
-                       y = dat$.y)
-                  },
-                first = TRUE)
 
 ROSE_control <- trainControl(method = "repeatedcv",
-                        number = 5,
+                        number = 10,
                         repeats = 3,
                         summaryFunction = f1,
                         classProbs = TRUE,
-                        sampling = less_rose,
+                        sampling = "rose",
                         search = 'random')
 
 
@@ -437,17 +478,25 @@ glmnet_drug_rose_all <- train(hard.drug ~ .,
                      data = drug_train,
                      method = 'glmnet',
                      metric = 'F1',
-                     tuneGrid = expand.grid(alpha = 1,lambda = seq(0.01,0.1,by = 0.001)),
+                     tuneGrid = expand.grid(alpha = 1,lambda = seq(0.001,0.01,by = 0.0001)),
                      trControl = ROSE_control)
 
 print(glmnet_drug_rose_all)
 ```
-# glmnet has highest overall ROC, but random forest is better at identifying those who are using drugs
-most important features are PC14, PC20, PC55
+
+Best lambda is 0.0044, corresponding to a F1 score of 0.1066
+
 ```{r}
-predict(glmnet_drug_rose_all$finalModel,drug_test[,"hard.drug"])
-ROSE::roc.curve(drug_train[,ncol(drug_train)],)
+confusionMatrix(glmnet_drug_rose_all)
 ```
+
+```{r}
+coef(glmnet_drug_rose_all$finalModel,s = 0.0044)
+```
+
+
+most important features are PC19, PC14, PC54
+
 # Random forest is actually do
 ```{r}
 ROSE_control <- trainControl(method = "repeatedcv",
@@ -459,13 +508,6 @@ ROSE_control <- trainControl(method = "repeatedcv",
                         search = 'random')
 
 #wrapper for calculating F1 score during cross validation 
-f1 <- function (data, lev = NULL, model = NULL) {
-  precision <- posPredValue(data$pred, data$obs, positive = "pass")
-  recall  <- sensitivity(data$pred, data$obs, postive = "pass")
-  f1_val <- (2 * precision * recall) / (precision + recall)
-  names(f1_val) <- c("F1")
-  f1_val
-} 
 
 rf_drug_rose_all <- train(hard.drug ~ .,
                      data = drug_train,
@@ -491,17 +533,6 @@ evalm(rf_drug_rose_all)
 ```{r}
 confusionMatrix(rf_drug_rose_all)
 ```
-# 
-```{r}
-hard_drug_imp <- varImp(rf_drug_rose_all$finalModel,scale = FALSE) %>%
-  rownames_to_column()%>%
-  arrange(desc(Overall))
 
-drug_rf_imp_var<-(hard_drug_imp %>%
-  filter(Overall >mean(hard_drug_imp$Overall)))$rowname
-```
 
-```{r}
-
-```
 
