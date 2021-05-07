@@ -87,3 +87,9 @@ derived_graphics/SC_ROC_Curve_Drug.png:\
  derived_data/model_data_TNPCA_SC.csv\
  glm_SC.R
 	Rscript glm_SC.R
+	
+#heatmaps
+derived_graphics/FC_Heatmaps.png:\
+ derived_data/FC.clean.csv\
+ heatmaps.R
+	Rscript heatmaps.R
