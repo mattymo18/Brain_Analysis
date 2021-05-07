@@ -40,11 +40,18 @@ drug.sc <- str.con$hcp.count[str.con$all.id %in% drug.subject$Subject]
 ```
 
 
-# So there are 133 subject
 
-#### Things to discuss 
-# How to compare these two group (Drug user / Non-drug user)? 
-# How to convert this matrix data to the network data? fc and sc (I'll try) 
+
+```{r}
+
+
+
+
+```
+
+
+
+
 
 
 ```{r}
@@ -63,3 +70,27 @@ ggplot(dt,mapping= aes(x = rowname, y = colname, fill = value))+geom_tile()+labs
 
 
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -36,7 +36,7 @@ mod.data<-left_join(coupling,FC.tnpca, by = "Subject")
 
 mod.data.sc<-left_join(coupling,SC.tnpca,by = "Subject")
 
-hard.drug.user <- mod.data %>% filter(Cocaine == "true" | THC == "true"| Opiates == "true"|Amphetamines == "true"
+hard.drug.user <- mod.data %>% filter(Cocaine == "true" | Opiates == "true"|Amphetamines == "true"
                                       | MethAmphetamine == "true" | Oxycontin == "true")
 
 mari.user <- mod.data %>% filter(SSAGA_Mj_Use == 1)
@@ -175,8 +175,19 @@ model.auc.sc
 
 
 
+###################Get subject list 
 
 
+## min ( 185947 coupling 0.1188 ) Max (182032 coupling 0.3310)
+model.data %>% filter(hard.drug == 0 )%>% dplyr::select(Subject,coupling) %>% arrange((coupling)) %>% head()
+
+##min(972566 coupling 0.1637 ) Max(358144 coupling 0.3079)
+model.data %>% filter(hard.drug == 1 )%>% dplyr::select(Subject,coupling) %>% arrange(desc(coupling)) %>% head()
 
 
+## min ( 185947 coupling 0.1188 ) Max (182032 coupling 0.3310)
+model.data %>% filter(SSAGA_Alc_D4_Dp_Dx == 1 )%>% dplyr::select(Subject,coupling) %>% arrange(desc(coupling)) %>% head()
+
+##min(767464 coupling 0.14747 ) Max(131722 0.30280)
+model.data %>% filter(SSAGA_Alc_D4_Dp_Dx == 5 )%>% dplyr::select(Subject,coupling) %>% arrange((coupling)) %>% head()
 

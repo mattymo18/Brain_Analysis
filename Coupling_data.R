@@ -56,4 +56,4 @@ for( i in 1: nrow(FC)){
 regional.cp <- cbind(FC[,1],regional.cp) 
 colnames(regional.cp) <- c("Subject", "coupling")
 
-write.csv(regional.cp, "derived_data/Druguser.cp.csv")
+write.csv(regional.cp, "derived_data/coupling.csv")
