@@ -15,9 +15,19 @@ clean:
 #phony target to run penalized_mods script for output
 .PHONY: penalized_mods
 
-penalized_mods:
+penalized_mods:\
+ derived_data/model_data_TNPCA_SC.csv\
+ derived_data/model_data_TNPCA_FC.csv
 	Rscript penalized_mods_FC.R
 	Rscript penalized_mods_SC.R
+	
+#phony target to run rf_mods script for output
+.PHONY: rf_mods
+
+rf_mods:\
+ derived_data/FC.PCA.clean.csv\
+ derived_data/model_data_TNPCA_FC.csv
+	Rscript rf_mods.R
 
 ################################################
 
