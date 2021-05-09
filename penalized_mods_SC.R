@@ -3,6 +3,7 @@ print("Estimated wait time ~9 minutes")
 library(glmnet)
 library(tidyverse)
 library(caret)
+library(ROCR)
 
 set.seed(893)
 SC.model <- read.csv("derived_data/model_data_TNPCA_SC.csv")
@@ -31,6 +32,10 @@ preds.ridge.drug <- ifelse(probs.ridge.drug >= .5, 1, 0)
 # model prediction performance
 conmat.ridge.drug <- confusionMatrix(as.factor(preds.ridge.drug), as.factor(hard.drugs.test.sc$hard.drug))
 
+#AUC calculation
+pred.object.ridge.drug <- prediction(probs.ridge.drug, hard.drugs.test.sc$hard.drug)
+auc.ridge.drug <- attr(performance(pred.object.ridge.drug, "auc"), "y.values")[[1]]
+
 ################## LASSO ##################
 cv.lasso.drug <- cv.glmnet(x, y, alpha = 1, family = "binomial")
 lasso.drug <- glmnet(x, y, alpha = 1, family = "binomial", lambda = cv.lasso.drug$lambda.min)
@@ -41,6 +46,10 @@ probs.lasso.drug <- lasso.drug %>% predict(newx = newx.lasso.drug, type = "respo
 preds.lasso.drug <- ifelse(probs.ridge.drug >= .5, 1, 0)
 # model prediction performance
 conmat.lasso.drug <- confusionMatrix(as.factor(preds.lasso.drug), as.factor(hard.drugs.test.sc$hard.drug))
+
+#AUC calculation
+pred.object.lasso.drug <- prediction(probs.lasso.drug, hard.drugs.test.sc$hard.drug)
+auc.lasso.drug <- attr(performance(pred.object.lasso.drug, "auc"), "y.values")[[1]]
 
 ################## Elastic ##################
 #10-fold cv
@@ -59,6 +68,14 @@ preds.elastic.drug <- elastic.drug %>% predict(newdata = hard.drugs.test.sc %>%
                                                  select(-hard.drug), type = "raw")
 # model prediction performance
 conmat.elastic.drug <- confusionMatrix(as.factor(preds.elastic.drug), as.factor(hard.drugs.test.sc$hard.drug))
+
+#AUC calculation
+probs.elastic.drug <- elastic.drug %>% predict(newdata = hard.drugs.test.sc %>% 
+                                                 select(-hard.drug), type = "prob") %>% 
+  mutate(prob = pmax(`0`, `1`)) %>% 
+  select(prob)
+pred.object.elastic.drug <- prediction(probs.elastic.drug, hard.drugs.test.sc$hard.drug)
+auc.elastic.drug <- attr(performance(pred.object.elastic.drug, "auc"), "y.values")[[1]]
 
 print("SC Hard Drugs Models Complete")
 
@@ -84,6 +101,10 @@ preds.ridge.mj <- ifelse(probs.ridge.mj >= .5, 1, 0)
 # model prediction performance
 conmat.ridge.mj <- confusionMatrix(as.factor(preds.ridge.mj), as.factor(MJ.test.sc$mari.user))
 
+#AUC calculation
+pred.object.ridge.mj <- prediction(probs.ridge.mj, MJ.test.sc$mari.user)
+auc.ridge.mj <- attr(performance(pred.object.ridge.mj, "auc"), "y.values")[[1]]
+
 ################## LASSO ##################
 cv.lasso.mj <- cv.glmnet(x, y, alpha = 1, family = "binomial")
 lasso.mj <- glmnet(x, y, alpha = 1, family = "binomial", lambda = cv.lasso.mj$lambda.min)
@@ -94,6 +115,10 @@ probs.lasso.mj <- lasso.mj %>% predict(newx = newx.lasso.mj, type = "response")
 preds.lasso.mj <- ifelse(probs.lasso.mj >= .5, 1, 0)
 # model prediction performance
 conmat.lasso.mj <- confusionMatrix(as.factor(preds.lasso.mj), as.factor(MJ.test.sc$mari.user))
+
+#AUC calculation
+pred.object.lasso.mj <- prediction(probs.lasso.mj, MJ.test.sc$mari.user)
+auc.lasso.mj <- attr(performance(pred.object.lasso.mj, "auc"), "y.values")[[1]]
 
 ################## Elastic ##################
 #10-fold cv
@@ -111,6 +136,14 @@ elastic.mj <- train(
 preds.elastic.mj <- elastic.mj %>% predict(newdata = MJ.test.sc %>% select(-mari.user), type = "raw")
 # model prediction performance
 conmat.elastic.mj <- confusionMatrix(as.factor(preds.elastic.mj), as.factor(MJ.test.sc$mari.user))
+
+#AUC calculation
+probs.elastic.mj <- elastic.mj %>% predict(newdata = MJ.test.sc %>% 
+                                             select(-mari.user), type = "prob") %>% 
+  mutate(prob = pmax(`0`, `1`)) %>% 
+  select(prob)
+pred.object.elastic.mj <- prediction(probs.elastic.mj, MJ.test.sc$mari.user)
+auc.elastic.mj <- attr(performance(pred.object.elastic.mj, "auc"), "y.values")[[1]]
 
 print("SC Marijuana Models Complete")
 
@@ -136,6 +169,10 @@ preds.ridge.alc <- ifelse(probs.ridge.alc >= .5, 1, 0)
 # model prediction performance
 conmat.ridge.alc <- confusionMatrix(as.factor(preds.ridge.alc), as.factor(Alc.dep.test.sc$Alc))
 
+#AUC calculation
+pred.object.ridge.alc <- prediction(probs.ridge.alc, Alc.dep.test.sc$Alc)
+auc.ridge.alc <- attr(performance(pred.object.ridge.alc, "auc"), "y.values")[[1]]
+
 ################## LASSO ##################
 cv.lasso.alc <- cv.glmnet(x, y, alpha = 1, family = "binomial")
 lasso.alc <- glmnet(x, y, alpha = 1, family = "binomial", lambda = cv.lasso.alc$lambda.min)
@@ -146,6 +183,10 @@ probs.lasso.alc <- lasso.drug %>% predict(newx = newx.lasso.alc, type = "respons
 preds.lasso.alc <- ifelse(probs.lasso.alc >= .5, 1, 0)
 # model prediction performance
 conmat.lasso.alc <- confusionMatrix(as.factor(preds.lasso.alc), as.factor(Alc.dep.test.sc$Alc))
+
+#AUC calculation
+pred.object.lasso.alc <- prediction(probs.lasso.alc, Alc.dep.test.sc$Alc)
+auc.lasso.alc <- attr(performance(pred.object.lasso.alc, "auc"), "y.values")[[1]]
 
 ################## Elastic ################
 #10-fold cv
@@ -164,15 +205,32 @@ preds.elastic.alc <- elastic.alc %>% predict(newdata = Alc.dep.test.sc %>% selec
 # model prediction performance
 conmat.elastic.alc <- confusionMatrix(as.factor(preds.elastic.alc), as.factor(Alc.dep.test.sc$Alc))
 
+#AUC calculation
+probs.elastic.alc <- elastic.alc %>% predict(newdata = Alc.dep.test.sc %>% 
+                                               select(-Alc), type = "prob") %>% 
+  mutate(prob = pmax(`0`, `1`)) %>% 
+  select(prob)
+pred.object.elastic.alc <- prediction(probs.elastic.alc, Alc.dep.test.sc$Alc)
+auc.elastic.alc <- attr(performance(pred.object.elastic.alc, "auc"), "y.values")[[1]]
+
 print("SC Alcohol Models Complete")
 
 print("SC Results:")
 paste("Hard Drug Ridge Accuracy:", as.numeric(conmat.ridge.drug$overall[1]))
+paste("Hard Drug Ridge AUC:", auc.ridge.drug)
 paste("Hard Drug LASSO Accuracy:", as.numeric(conmat.lasso.drug$overall[1]))
+paste("Hard Drug LASSO AUC:", auc.lasso.drug)
 paste("Hard Drug Elastic Accuracy:", as.numeric(conmat.elastic.drug$overall[1]))
+paste("Hard Drug Elastic AUC:", auc.elastic.drug)
 paste("MJ Ridge Accuracy:", as.numeric(conmat.ridge.mj$overall[1]))
+paste("MJ Ridge AUC:", auc.ridge.mj)
 paste("MJ LASSO Accuracy:", as.numeric(conmat.lasso.mj$overall[1]))
+paste("MJ LASSO AUC:", auc.lasso.mj)
 paste("MJ Elastic Accuracy:", as.numeric(conmat.elastic.mj$overall[1]))
+paste("MJ Elastic AUC:", auc.elastic.mj)
 paste("Alc Ridge Accuracy:", as.numeric(conmat.ridge.alc$overall[1]))
+paste("Alc Ridge AUC:", auc.ridge.alc)
 paste("Alc LASSO Accuracy:", as.numeric(conmat.lasso.alc$overall[1]))
+paste("Alc LASSO AUC:", auc.lasso.alc)
 paste("Alc Elastic Accuracy:", as.numeric(conmat.elastic.alc$overall[1]))
+paste("Alc Elastic AUC:", auc.elastic.alc)
