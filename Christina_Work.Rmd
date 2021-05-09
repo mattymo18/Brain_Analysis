@@ -53,14 +53,7 @@ ggplot(mari_abuse,aes(x = PC1,y = PC2,color = mj_ab)) + geom_point()+
   scale_color_manual(labels = c("non mj abuser","mj abuser"),values = c("#F8766D","#00BFC4"))
 ```
 
-```{r,webgl=TRUE, results='hide'}
-mycolors <- c('royalblue1', 'darkcyan')
-par(mar=c(0,0,0,0))
-mari_abuse$color <- mycolors[ as.numeric(mari_abuse$mj_ab) ]
-plot3d(x = mari_abuse$PC1,y = mari_abuse$PC2,z = mari_abuse$PC3,col = mari_abuse$color,
-        xlab="PC1 Score", ylab="PC2 Score", zlab="PC3 Score",)
-legend3d("topright", legend = c('Non MJ abusers','MJ abusers'),col = mycolors)
-```
+
 
 The plot is not particularly interesting. Could be that MJ abuse doesn't correspond to different brain structures.
 
@@ -75,13 +68,7 @@ table(mod_fc_data$Alc)
 
 ```
 
-```{r}
-#sample 50 users from alcohol
-alc_ab_sample <-mod_fc_data %>%
-  mutate(Alc = factor(Alc))%>%
-  group_by(Alc) %>%
-  sample_n(100)
-```
+
 
 ```{r}
 ggplot(alc_ab_sample,aes(x = PC1,y = PC2,color = Alc)) + geom_point()+
@@ -516,6 +503,13 @@ rf_drug_rose_all <- train(hard.drug ~ .,
                      tuneLength = 15,
                      trControl = ROSE_control)
 print(rf_drug_rose_all)
+```
+
+```{r}
+varImp(rf_drug_rose_all$finalModel)%>%
+  rownames_to_column()%>%
+  arrange(desc(Overall)) %>%
+  head(20)
 ```
 
 ```{r}

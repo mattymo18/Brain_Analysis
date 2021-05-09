@@ -1,0 +1,100 @@
+---
+title: "3dgraphics"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(rgl)
+library(MLeval)
+```
+
+```{r}
+#for embedding interative 3d plot in html
+library(knitr)
+knit_hooks$set(webgl = hook_webgl)
+```
+
+```{r}
+mod_fc_data = read.csv("derived_data/model_data_TNPCA_FC.csv")
+fc_pca = read.csv("derived_data/FC.PCA.clean.csv")
+```
+
+```{r}
+#sample 203 users from alcohol
+alc_ab_sample <-mod_fc_data %>%
+  mutate(Alc = factor(Alc))%>%
+  group_by(Alc) %>%
+  sample_n(203)
+```
+
+```{r}
+drug_sample <- mod_fc_data %>%
+  mutate(hard.drug = as.factor(hard.drug))%>%
+  group_by(hard.drug)%>%
+  sample_n(20)
+```
+
+```{r}
+#sample 200 subject from marijuana abuse and non abuse for making plots
+
+mari_abuse<-fc_pca %>%
+  drop_na(SSAGA_Mj_Ab_Dep)%>%
+  rename(mj_ab = SSAGA_Mj_Ab_Dep)%>%
+  mutate(mj_ab = factor(mj_ab))%>%
+  group_by(mj_ab)%>%
+  sample_n(90)
+```
+
+```{r}
+table(fc_pca$SSAGA_Mj_Ab_Dep)
+```
+
+PC 1, 2,3 3d plot for marijuana
+```{r,webgl=TRUE, results='hide'}
+mycolors <- c('royalblue1', 'red')
+par(mar=c(0,0,0,0))
+mari_abuse$color <- mycolors[as.numeric(mari_abuse$mj_ab)]
+plot3d(x = mari_abuse$PC1,y = mari_abuse$PC2,z = mari_abuse$PC3,
+       col = mari_abuse$color, 
+       xlab="PC1 Score", ylab="PC2 Score", zlab="PC3 Score")
+legend3d("topright", legend = c('Non-Mj users','MJ users'),pch = 12,col = mycolors)
+```
+
+# 3d plots of alcohol vs non alcohol using important RF features 
+
+This is rather interesting, 
+RF recognized these 3 variables as important probably because some outliers have large values in PC12 and PC56
+```{r,webgl=TRUE, results='hide'}
+mycolors <- c('royalblue1', 'red')
+par(mar=c(0,0,0,0))
+alc_ab_sample$color <- mycolors[ as.numeric(alc_ab_sample$Alc) ]
+plot3d(x = alc_ab_sample$PC12,y = alc_ab_sample$PC56,z = alc_ab_sample$PC6,col = alc_ab_sample$color,
+        xlab="PC12 Score", ylab="PC56 Score", zlab="PC6 Score")
+legend3d("topright", legend = c('Non-Alcohol abusers','Alcohol abusers'),pch = 12,col = mycolors)
+```
+
+alcohol graph using important vars in glmnet models
+
+```{r,webgl=TRUE, results='hide'}
+mycolors <- c('royalblue1', 'red')
+par(mar=c(0,0,0,0))
+alc_ab_sample$color <- mycolors[ as.numeric(alc_ab_sample$Alc) ]
+plot3d(x = alc_ab_sample$PC30,y = alc_ab_sample$PC31,z = alc_ab_sample$PC56,col = alc_ab_sample$color,
+        xlab="PC30 Score", ylab="PC31 Score", zlab="PC56 Score")
+legend3d("topright", legend = c('Non-Alcohol abusers','Alcohol abusers'),pch = 12,col = mycolors)
+```
+
+
+# 3d plots for hard.drug users
+
+```{r,webgl=TRUE, results='hide'}
+mycolors <- c('royalblue1', 'red')
+par(mar=c(0,0,0,0))
+drug_sample$color <- mycolors[ as.numeric(drug_sample$hard.drug) ]
+plot3d(x = alc_ab_sample$PC1,y = alc_ab_sample$PC2,z = alc_ab_sample$PC3,col = alc_ab_sample$color,
+        xlab="PC1 Score", ylab="PC2 Score", zlab="PC3 Score")
+legend3d("topright", legend = c('Non-drug abusers','Drug abusers'),pch = 12,col = mycolors)
+````
+
