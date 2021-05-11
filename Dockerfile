@@ -1,4 +1,3 @@
-FROM texlive/texlive:latest
 FROM rocker/verse
 MAINTAINER Matt Johnson <johnson.matt1818@gmail.com>
 #For R
@@ -16,3 +15,4 @@ RUN R -e "install.packages('MLmetrics')"
 RUN R -e "install.packages('ROCR')"
 RUN R -e "install.packages('knitr')"
 RUN R -e "install.packages('e1071', dependencies=TRUE)"
+RUN sudo apt-get install texlive-latex-base
