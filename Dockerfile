@@ -15,4 +15,3 @@ RUN R -e "install.packages('MLmetrics')"
 RUN R -e "install.packages('ROCR')"
 RUN R -e "install.packages('knitr')"
 RUN R -e "install.packages('e1071', dependencies=TRUE)"
-RUN sudo apt-get install texlive-latex-base
