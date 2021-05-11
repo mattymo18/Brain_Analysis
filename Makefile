@@ -28,11 +28,20 @@ rf_mods:\
  derived_data/FC.PCA.clean.csv\
  derived_data/model_data_TNPCA_FC.csv
 	Rscript rf_mods.R
+	
+#phony target to run Coupling EDA script for output
+.PHONY: Coup_EDA
+
+Coup_EDA:\
+ derived_data/model_data_TNPCA_FC.csv
+	Rscript Coupling_EDA.R
 
 ################################################
 
 #builds final report	
 Analysis.pdf:\
+ images/F1_large.jpg\
+ derived_data/model_data_TNPCA_FC.csv\
  Analysis.Rmd
 	R -e "rmarkdown::render('Analysis.Rmd')"
 	
@@ -66,8 +75,7 @@ derived_data/Coupling.csv:\
 	
 #prelim plots
 prelim_graphics/Drug.Histograms.png:\
- derived_data/Clean.Traits.csv\
- derived_data/Druguser.cp.csv\
+ derived_data/model_data_TNPCA_FC.csv\
  tidy_eda_plots.R
 	Rscript tidy_eda_plots.R
 	
