@@ -1,5 +1,4 @@
 FROM rocker/verse
-FROM texlive/texlive:latest
 MAINTAINER Matt Johnson <johnson.matt1818@gmail.com>
 #For R
 RUN R -e "install.packages('R.matlab')"
@@ -16,3 +15,4 @@ RUN R -e "install.packages('MLmetrics')"
 RUN R -e "install.packages('ROCR')"
 RUN R -e "install.packages('knitr')"
 RUN R -e "install.packages('e1071', dependencies=TRUE)"
+FROM texlive/texlive:latest
