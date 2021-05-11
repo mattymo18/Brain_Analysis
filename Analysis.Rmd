@@ -12,6 +12,7 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
 ```
 
 Abstract
@@ -48,14 +49,73 @@ where $L$ is the log odds and the $\beta_is$ are the parameters with $\beta_0$ a
 We decide to measure Logistic model effectiveness using Area Under the Receiver Operating Characteristic curve, or more simply Area Under Curve (AUC). AUC is calculated by first computing the Receiver Operating Characteristic curve, then measuring the area under this curve. AUC combines the False positive rate (FPR) and the True positive rate (TPR) into a single metric that describes the overall performance of the model. We begin using this method of model evaluation, but will later move on to use F1 score after discovering issues with class imbalances.
 
 **Penalized Regression** \
+We continue modeling procedures with three methods of Penalized Logistic Regression (Ridge, LASSO, Elastic Net). Historically, these methods are used when the data is of high dimension. Also, we suspect many of these predictors will likely not be useful in classifying a substance abuser and that is potential for multicollinearity. WE fit these models on the TNPCA and coupling factor for FC and SC respectively. 
+
+*Ridge:* Ridge regression is the first method considered. Ridge is a form of multiple regression that add a penalty factor for the $\beta$ estimates. Ridge regression allows for the number of columns to be greater than the number of observations unlike Ordinary Least Squares (OLS). Ridge also shrinks coefficients and controls the tradeoff between fit and magnitude of $\beta{}s$. In OLS, 
+$$\hat\beta = (X^tX)^{-1}X^ty$$ 
+
+while in Ridge we have 
+$$\hat\beta_{ridge} = (X^tX + \lambda I_p)^{-1}X^ty$$ 
+
+where $I_p$ is the pxp Identity matrix and $\lambda$ is the penalty factor. We use cross validation to find the optimal $\lambda$ that minimizes the error. Ridge regression can also be written in the form of an optimization program: 
+$$\min_{\beta_0, \beta} [\sum_{i=1}^N(y_i-\beta_0-x_i^t\beta)^2] \ \ \ \ s.t.\sum_{j=1}^p|\beta_j|_2 \le t$$
+
+Where $|\beta_j|_2$ is the L2 norm of $\beta_j$. This is very similar to the LASSO optimization problem discussed next. 
+
+*LASSO:* LASSO regression is then computed. LASSO is similar to Ridge in that it utilizes a penalty parameter, but rather then shrinking $\beta{}s$ it pushes them to 0. This is useful in this case since we have many predictors and it is likely some of them will not be useful. LASSO will push the insignificant predictors to 0 and leave the others in the model. This works as a variable selection technique. LASSO can be written as an optimization problem rather than a regression problem in the form:
+$$\min_{\beta_0, \beta} [\sum_{i=1}^N(y_i-\beta_0-x_i^t\beta)^2] \ \ \ \ s.t.\sum_{j=1}^p|\beta_j|_1 \le t$$
+
+Where $|\beta_j|_1$ is the L1 norm of $\beta_j$. This constraint ensures the $\beta$ estimates will be below a certain threshold. We use cross-validation to find the optimal value for t that minimizes the error. 
+
+*Elastic Net:* Finally, we consider the Elastic Net. The elastic net can be thought of as the intersection between Ridge and Lasso. The Elastic Net combines the L1 and L2 norms and uses two separate penalties to incorporate them both into single expression. The $\hat\beta$ estimates can be calculated with the following expression:
+$$\hat\beta = \arg\min_{\beta}[\sum_{i=1}^N(y_i-\beta_0-x_i^t\beta)^2 + \lambda|\beta|_2 + \alpha|\beta|_1]$$
+
+where $\lambda$ is the penalty parameter for the L2 Norm of $\beta$ and $\alpha$ is the penalty parameter for the L1 norm of $\beta$. We used cross validation to find optimal values for $\lambda$ and $\alpha$. 
+
+Each of these three models were trained and tested on independent sets that maintained the initial class distribution for the substance abusers. We fit each of these models on the three substance use groups for a total of 9 models. 
 
 **Random Forest** \
+The last modeling technique we decided to use was Random Forest (RF) for classification. RF's utilize many decision trees to complete a classification. Decision trees work by creating partitions that split the features space in a way such that the partition boundary is axis-parallel. The tree continues splitting the feature space until a subsequent split no longer increases the change in purity (or in this case F1 score). A RF is simply a whole group of decision trees that takes the majority vote for how to classify each sample. Each tree is trained on a bootstrapped sample of the original data, using a random subset of all the predictors. As a result, it is oftentimes more desirable to use random forest than a single decision tree, since random forest does not suffer from high variance and can still draw a non-linear decision boundary. 
 
+We decide to change our method of model evaluation here because in previous models we wanted a more general idea of how well the models performed. Using AUC gave us a generalized idea of how the model performed, but F1 score puts an emphasis on the minority class prediction. In our case, we are always trying to predict that a member is in the minority class, so we decided F1 score would be a better indicator of how well we predicted the minority class. Also, we decided to move away from modeling on both SC and FC separately and only used FC for the RF modeling procedure. We make this decision because in the previous modeling procedures we found slightly better results using the TNPCA of the FC matrices instead of from the SC matrices. We believe this is because most participants have similar brain connections regardless of their substance abuse history. We are more interested in the function of the brain rather than the specific connections the brain contains. Finally, we decided to end our analysis of Marijuana use to focus on more devastating substances (Cocaine, Oxycontin, alcohol) with regard to deaths. This decision was made according to the poor results on our previous Marijuana usage models, as well as the revolutionizing social climate around Marijuana use. We found it was most difficult to model for a marijuana, thus we decided there must not be as big of a difference between a Marijuana users brain and a non-user's brain. Furthermore, many states have begun to legalize Marijuana deeming it healthy enough for recreational use.
+
+To combat class imbalance, one common strategy is to over-sample the minority class to obtain a balanced dataset. Simple approaches to over-sampling could be repeating or bootstrapping the minority class samples. A more sophisticated approach of oversampling, Randomly Over Sampling Examples, or ROSE, is used here. Operationally, ROSE creates synthetic samples  by drawing examples from a conditional kernel density estimate of the minority class, as described in Menardi and Torelli (2013).
+
+\pagebreak
 
 Results
 -------
 
 **SC-FC Coupling Factor** \
+Once we had calculated the SC-FC Coupling Factor the natural next stop was the do a small side analysis on this aspect of the brain. Below are summary tables for the coupling factors across the use different groups as well as T.Test p-values for difference of means between the substance use groups and the control (Non-user) group. 
+```{r, echo=FALSE, out.width="80%", fig.align='center'}
+Table <- data.frame(
+  Substance = c("Control", "Alcohol", "Hard Drug", "Marijuana"), 
+           Minimum = c(0.1188, 0.1242, 0.1638, 0.1282), 
+  `First Quartile` = c(0.2161, 0.2092, 0.2322, 0.2148), 
+            Median = c(0.2391, 0.2359, 0.2459, 0.2384), 
+              Mean = c(0.2382, 0.2329, 0.2450, 0.2362), 
+  `Third Quartile` = c(0.2621, 0.2609, 0.2679, 0.2611), 
+           Maximum = c(0.3233, 0.3028, 0.3080, 0.3226)
+)
+knitr::kable(Table)
+```
+
+```{r, echo=FALSE, out.width="80%", fig.align='center'}
+Table <- data.frame(
+  Substance = c("Alcohol", "Hard Drug", "Marijuana"), 
+  `P-Value` = c(0.08, 0.32, 0.39)
+)
+knitr::kable(Table)
+```
+
+As you can see above, there does not seem to be a significant difference between the different substance groups and the control groups at .05, but it is close in alcohol. This leads us to believe may be a difference between the alcohol group and the control, but it is very small. Figure 2, shown below, reinforces this result. The histograms clearly overlap and seem to have a similar peak. 
+
+```{r, echo=FALSE, out.width="50%", fig.align='center', fig.cap='Substance User Couplings'}
+knitr::include_graphics("prelim_graphics/Drug_Histograms.png")
+```
+
+\pagebreak
 
 **Logistic Regression** \
 
