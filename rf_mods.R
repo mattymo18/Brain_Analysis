@@ -5,7 +5,7 @@ library(caret)
 library(ROSE)
 library(MLmetrics)
 
-print("Estimated wait time ~15 minutes")
+print("Estimated wait time ~60 minutes")
 #set a seed for random things
 set.seed(893)
 
@@ -48,23 +48,26 @@ alc_test = fc_train[-train,]
 
 #model below seems to have issues and takes a while to run, lets remove it
 #train a random forest first?
-#5-fold cv
-#random search over parameters mtry, which is the 
-#number of predictors given to each tree
-#also calculate F1 score for each param, note that the positive class is "yes"
-# control <- trainControl(method = "cv",
-#                         number = 5,
-#                         summaryFunction = f1,
-#                         classProbs = TRUE,
-#                         search = 'random')
-# 
-# alc_rf_random <- train(Alc~.,
-#                        data = alc_train,
-#                        method = 'rf',
-#                        metric = 'F1',
-#                        tuneLength = 15,
-#                        trControl = control)
-# print(alc_rf_random)
+# 5-fold cv
+# random search over parameters mtry, which is the
+# number of predictors given to each tree
+# also calculate F1 score for each param, note that the positive class is "yes"
+print("Alcohol Modeling Begins")
+control <- trainControl(method = "repeatedcv",
+                        number = 10,
+                        repeats = 3,
+                        summaryFunction = f1,
+                        classProbs = TRUE,
+                        search = 'random')
+
+alc_rf_random <- train(Alc~.,
+                       data = alc_train,
+                       method = 'rf',
+                       metric = 'F1',
+                       tuneLength = 15,
+                       trControl = control)
+print("RF Alc response without ROSE sampling result:")
+print(alc_rf_random)
 
 #use ROSE during re-sampling i.e in each iteration of CV
 
@@ -76,10 +79,9 @@ alc_test = fc_train[-train,]
 
 #over sample with the entire data set
 #do it inside each CV iteration
-print("Alcohol Modeling Begins")
 
 ROSE_control <- trainControl(method = "repeatedcv",
-                             number = 5,
+                             number = 10,
                              repeats = 3,
                              summaryFunction = f1,
                              classProbs = TRUE,
@@ -89,7 +91,7 @@ alc_rf_ROSE <- train(Alc~.,
                      data = alc_train,
                      method = 'rf',
                      metric = 'F1',
-                     tuneLength = 5,
+                     tuneLength = 15,
                      trControl = ROSE_control)
 print("RF Alc response with ROSE sampling result:")
 print(alc_rf_ROSE)
@@ -116,7 +118,7 @@ var_imp_fc_rose <- varImp(alc_rf_ROSE$finalModel) %>%
 imp_var_fc_rose <- (var_imp_fc_rose %>% head(20))$rowname
 
 ROSE_control <- trainControl(method = "repeatedcv",
-                             number = 5,
+                             number = 10,
                              repeats = 3,
                              summaryFunction = f1,
                              classProbs = TRUE,
@@ -183,7 +185,7 @@ drug_test = mod_fc_drug[-train,]
 # Sys.sleep(10)
 
 ROSE_control <- trainControl(method = "repeatedcv",
-                             number = 5,
+                             number = 10,
                              repeats = 3,
                              summaryFunction = f1,
                              classProbs = TRUE,

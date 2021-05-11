@@ -46,7 +46,7 @@ $$L = \beta_0 + \sum_{i=1}^n \beta_ix_i$$
 
 where $L$ is the log odds and the $\beta_is$ are the parameters with $\beta_0$ as the intercept. We fit a logistic model on each of the three user groups (hard drugs, Marijuana, alcohol) using the TNPCA data for the FC and SC separately along with the coupling statistic. At this point, we are unsure if the FC and SC is more useful in predicting a substance abuser, so we use the TNPCA results for both and fit separate models on each group. 
 
-We decide to measure Logistic model effectiveness using Area Under the Receiver Operating Characteristic curve, or more simply Area Under Curve (AUC). AUC is calculated by first computing the Receiver Operating Characteristic curve, then measuring the area under this curve. AUC combines the False positive rate (FPR) and the True positive rate (TPR) into a single metric that describes the overall performance of the model. We begin using this method of model evaluation, but will later move on to use F1 score after discovering issues with class imbalances.
+We decide to measure Logistic model effectiveness using Area Under the Receiver Operating Characteristic curve, or more simply Area Under Curve (AUC) and Akaike Information Criterion (AIC). AUC is calculated by first computing the Receiver Operating Characteristic curve, then measuring the area under this curve. AUC combines the False positive rate (FPR) and the True positive rate (TPR) into a single metric that describes the overall performance of the model. AIC is only used here as a preliminary measure to get a sense of which models are performing well. We begin using this method of model evaluation, but will later move on to use F1 score after discovering issues with class imbalances.
 
 **Penalized Regression** \
 We continue modeling procedures with three methods of Penalized Logistic Regression (Ridge, LASSO, Elastic Net). Historically, these methods are used when the data is of high dimension. Also, we suspect many of these predictors will likely not be useful in classifying a substance abuser and that is potential for multicollinearity. WE fit these models on the TNPCA and coupling factor for FC and SC respectively. 
@@ -98,7 +98,7 @@ Table <- data.frame(
   `Third Quartile` = c(0.2621, 0.2609, 0.2679, 0.2611), 
            Maximum = c(0.3233, 0.3028, 0.3080, 0.3226)
 )
-knitr::kable(Table)
+knitr::kable(Table, caption = "Summary Statistics for User Group Couplings")
 ```
 
 ```{r, echo=FALSE, out.width="80%", fig.align='center'}
@@ -106,7 +106,7 @@ Table <- data.frame(
   Substance = c("Alcohol", "Hard Drug", "Marijuana"), 
   `P-Value` = c(0.08, 0.32, 0.39)
 )
-knitr::kable(Table)
+knitr::kable(Table, caption = "P-Values for T.Test Difference of Means")
 ```
 
 As you can see above, there does not seem to be a significant difference between the different substance groups and the control groups at .05, but it is close in alcohol. This leads us to believe may be a difference between the alcohol group and the control, but it is very small. Figure 2, shown below, reinforces this result. The histograms clearly overlap and seem to have a similar peak. 
@@ -118,20 +118,141 @@ knitr::include_graphics("prelim_graphics/Drug_Histograms.png")
 \pagebreak
 
 **Logistic Regression** \
+The model performance metrics for the logistic regression using the TNPCA and coupling data for FC and SC are found below. 
+
+```{r, echo=FALSE, out.width="80%", fig.align='center'}
+Table <- data.frame(
+  Substance = c("Alcohol", "Hard Drug", "Marijuana"),
+  AIC = c(804.49, 1042.12, 22.04),
+  AUC = c(0.70, 0.69, 0.94)
+)
+knitr::kable(Table, caption = "Logistic Regression TNPCA FC and Coupling")
+```
+
+```{r, echo=FALSE, out.width="80%", fig.align='center'}
+Table <- data.frame(
+  Substance = c("Alcohol", "Hard Drug", "Marijuana"),
+  AIC = c(800.54, 1081.10, 217.56),
+  AUC = c(0.70, 0.65, 0.94)
+)
+knitr::kable(Table, caption = "Logistic Regression TNPCA SC and Coupling")
+```
+
+From Table 3 and table 4 we see the Marijuana models are not performing as well as the other two models. There is only a slight reduction in AUC, but a large increase in AIC. This implies the interaction between the TNPCA data and the coupling results explain the disparity between the hard drug users and alcohol users better than the Marijuana users. Also, AUC seems very high in the drug models. We believe this due to the major class imbalance. Figure 3 and Figure 4 below show the AUC curve for alcohol and hard drug users. 
+
+```{r, echo=FALSE, out.width="50%", fig.align='center', fig.cap='AUC Curvev Alcohol'}
+knitr::include_graphics("derived_graphics/FC_ROC_Curve_Alc.png")
+```
+
+```{r, echo=FALSE, out.width="50%", fig.align='center', fig.cap='AUC Curve Hard Drugs'}
+knitr::include_graphics("derived_graphics/FC_ROC_Curve_Drug.png")
+```
+
+As you can see, in the hard drug case the plot moves rapidly up. This leads us to believe the model has high recall but low precision. Since there are so few drug users in the set, predicting that every user does not use drugs leads to misleading accuracy. We then move on to penalized regression to see if we can improve on these results. 
+
+\pagebreak
 
 **Penalized Regression** \
+Penalized Logistic model metrics are shown in Tables 5,6 and 7 below. For each substance use group, we trained Ridge, LASSO, and Elastic Net models. We continue to use AUC as the performance metric, but we also include pure accuracy to show the disparity between the metrics. Due to the class imbalance, accuracy is a flawed metric. In every case the model chooses the majority class as each prediction. 
+
+```{r, echo=FALSE, out.width="60%", fig.align='center'}
+Table <- data.frame(
+  Model = c("Ridge", "LASSO", "Elastic Net"),
+  AUC = c(0.46, 0.50, 0.47),
+  Accuracy = c(0.80, 0.80, 0.80)
+)
+knitr::kable(Table, caption = "Performance Metrics Penalized Model Alcohol Users")
+```
+
+```{r, echo=FALSE, out.width="60%", fig.align='center'}
+Table <- data.frame(
+  Model = c("Ridge", "LASSO", "Elastic Net"),
+  AUC = c(0.52, 0.48, 0.53),
+  Accuracy = c(0.98, 0.98, 0.98)
+)
+knitr::kable(Table, caption = "Performance Metrics Penalized Model Hard Drug Users")
+```
+
+```{r, echo=FALSE, out.width="60%", fig.align='center'}
+Table <- data.frame(
+  Model = c("Ridge", "LASSO", "Elastic Net"),
+  AUC = c(0.56, 0.50, 0.50),
+  Accuracy = c(0.57, 0.57, 0.96)
+)
+knitr::kable(Table, caption = "Performance Metrics Penalized Model Marijuana Users")
+```
+
+\pagebreak
+
+The extremely high accuracy in the drug group lead us to find the class imbalance was more skewed then we initial thought. This accuracy is, essentially, the No-Information prediction error. If we choose the majority class each time this is our accuracy in each model for each user group. This is not a meaningful result. When we attempted the under-sampling method, the models did not converge and many of the coefficients became 0 due to a singularity issue. We concluded that under sampling is not useful for this data, and does not help us predict substance users. In the next section we will discuss the Random Forest results with ROSE sampling. 
 
 **Random Forest** \
+As described in the *Methodology* section a 10-fold cross validated random forest is fit on the drug and alcohol user groups separately. For each fold, 15 randomly selected 'mtry' parameters are chosen. These control the number of predictors to use in each tree. The optimal 'mtry' value is used in the final model. Also, we complete one test with and one test without ROSE sampling. Table 8 displays the results for the Random Forest analysis. 
 
-Conclusion
-----------
+```{r, echo=FALSE, out.width="60%", fig.align='center'}
+Table <- data.frame(
+  Model = c("Random Forest (Without Rose)", "Random Forest (ROSE)"),
+  Alcohol = c(0.07, 0.32), 
+  `Hard Drugs` = c(0, 0.07)
+)
+knitr::kable(Table, caption = "F1 Score Random Forest Analysis")
+```
+
+As you can see, ROSE sampling made a substantial difference in the models predictive capability. Still, the model has quite a low F1 score meaning it my have high recall but low precision. The models are able to identify alcohol users, but now that the data is balanced with ROSE, there are too many false positives. 
+
+**Heatmaps and Tractography** \
+In addition to our modeling results, we decided to seek out the tractography of representative subjects in the analysis. We found an an alcohol user, a hard drug user, and a control and built plots to compare the three groups. We used Trackvis software to open each subjects left side of the brain. Different colors represent different values for brain function. Figure 5 shows the heatmaps for each subject corresponding to their FC matrix. Figures 6 and 7 show the trachtography between a substance abuser and the conrol. In each case the substance user is on the left and the control on the right. 
+
+```{r, echo=FALSE, out.width="50%", fig.align='center', fig.cap='FC Spectral Heatmaps'}
+knitr::include_graphics("derived_graphics/FC_Heatmaps.png")
+```
+
+```{r, echo=FALSE, fig.asp=.05, fig.align='center', fig.cap='Alcohol User Vs. Control'}
+knitr::include_graphics("images/Alcohol_tractography.JPG")
+```
+
+```{r, echo=FALSE, fig.asp=.05, fig.align='center', fig.cap='Drug User Vs. Control'}
+knitr::include_graphics("images/Drug_tractography.JPG")
+```
+
+\pagebreak
+
+In each figure above, you can clearly see a difference between the three groups. Alcohol seems to have the greatest difference according to the heatmap. There are slight differences in the trachtography in the top and bottom of the brains. In the drug user we see a sharp red group of lines towards the bottom of the brain that is a major difference between the plots. Similarly, in the alcohol plot we see a much larger bundle towards the bottom left that does not appear in the control brain. 
+
+Conclusion & Future Research
+----------------------------
+
+**Conclusion** \
+Despite trying multiple different types of modeling we were unable to achieve a strong stable way to accurately classify an alcohol or drug user. We saw slight improvements when using a comprehensive method like Random Forest, but still the F1 score is not good enough. ROSE sampling seemed to greatly help the models performance and seems reasonable to use in this case with large class imbalances. We have listed a few reasons we believe we were unsuccessful in accurately predicting substance groups below. 
+
+1. Age was not considered during modeling. Age could have a major impact on this analysis since certain substance users could have been using for a very long time or a very short time depending on their age. 
+2. Gender is not considered. Gender plays an important role in brain size and thus can have an affect on brain function. Alcohol abuse could lead to even more drastic differences in females rather than males. 
+3. Our threshold for using alcohol and drugs only took into account the past years data. We do not know how long a subject has been using a substance. These drugs can take time to show their true affects and a single year may not be long enough. 
+
+We can conclude that we had the best results when applying our models to the alcohol user group. We believe this to mean there is a statistical difference in the alcohol users brain function when compared to a non-user. We believe that due to alcohols depressive nature someone who is using alcohol over a long period of time will begin to see diminished brain function. 
+
+**Future Research** \
+Future work should include more advanced classification techniques such as XGBoost, Gradient Boosting Machines, and Neural Networks. These modeling methods sometimes lack interpretability, but can usually classify with high precision. Also, adding gender and age statistics to the predictors could add to prediction ability. Furthermore, quantifying longevity of substance use could be key to analyzing the correct subjects brains. We need data from people that have been long time substance abusers so we can see the true effects of long term use. 
+
+
+CRediT Authorship Contribution Statement
+----------------------------------------
+1. Christina (Ke) Cai: Visualization (3d plot), Modeling (Random Forest)
+2. Jimin Choi: Data Cleaning, Modeling (Logisitc Regression), Coupling Factor Analysis
+3. Matt Johnson: Data Cleaning, Modeling (Penalized Models), Visualization, Git Management, Latex Compilation
+
+\pagebreak
 
 References
 ----------
+1. Aberrant structural–functional coupling in adult cannabis users Dae-Jin Kim1 | Ashley M. Schnakenberg Martin1 | Yong-Wook Shin2 | Hang Joon Jo3 | Hu Cheng1,4 | Sharlene D. Newman1,4 | Olaf Sporns1,5 | William P. Hetrick1 | Eli Calkins1 | Brian F. O'Donnell1.
 
+2. Development of structure–function coupling in human brain networks during youth”-Graham L. Baum, Zaixu Cui, David R. Roalf, Rastko Ciric, Richard F. Betzel, Bart Larsen.
 
-```{r, echo=FALSE, out.width="50%"}
-# knitr::include_graphics("README_graphics/HR.png")
-# knitr::include_graphics("README_graphics/Pitcher.png")
-#use later for putting pictures in
-```
+3. Individual structural features constrain the mouse functional connectome Francesca Melozzia,1, Eyal Bergmannb,1, Julie A. Harrisc , Itamar Kahnb,2, Viktor Jirsaa,2,3, and Christophe Bernarda,2,3.
+
+4. Raphael Liégeois, Augusto Santos, Vincenzo Matta, Dimitri Van De Ville, Ali H. Sayed; Revisiting correlation-based functional connectivity and its relationship with structural connectivity. Network Neuroscience 2020; 4 (4): 1235–1251.
+
+5. Regional structural-functional connectome coupling 2 is heritable and associated with age, sex and 3 cognition in adults Zijin Gu1 , Keith Wakefield Jamison2 , Mert Rory Sabuncu1,2, and Amy Kuceyeski2. 
+
+6. Zhang, Z. , Liao, W. , Chen, H. , Mantini, D. , Ding, J. R. , Xu, Q. , … Lu, G. (2011). Altered functional‐structural coupling of large‐scale brain networks in idiopathic generalized epilepsy. Brain, 134, 2912–2928.

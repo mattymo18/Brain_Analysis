@@ -41,7 +41,12 @@ Coup_EDA:\
 #builds final report	
 Analysis.pdf:\
  images/F1_large.jpg\
- derived_data/model_data_TNPCA_FC.csv\
+ prelim_graphics/Drug_Histograms.png\
+ derived_graphics/FC_ROC_Curve_Alc.png\
+ derived_graphics/FC_ROC_Curve_Drug.png\
+ derived_graphics/FC_Heatmaps.png\
+ images/Alcohol_tractography.JPG\
+ images/Drug_tractography.JPG\
  Analysis.Rmd
 	R -e "rmarkdown::render('Analysis.Rmd')"
 	
