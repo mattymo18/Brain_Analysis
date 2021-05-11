@@ -3,64 +3,36 @@ library(tidyverse)
 library(gridExtra)
 library(grid)
 
-Traits.clean <- read.csv("derived_data/Clean.Traits.csv")
-Coupling <- read.csv("derived_data/Druguser.cp.csv")
+DF <- read.csv("derived_data/model_data_TNPCA_FC.csv")
 
 #how about histograms overlayed split by who is  THC , alcohol dependent and who is not
 
-#first join coupling with traits
-DF <- left_join(Coupling, Traits.clean, by = "Subject")
-
-#check some of the drug traits 
-# nrow(DF[which(DF$Cocaine == "true"), ]) #only 5 coke users
-# nrow(DF[which(DF$Opiates == "true"), ]) #onoly 7 opiate users
-# nrow(DF[which(DF$MethAmphetamine == "true"), ]) #only 5
-# nrow(DF[which(DF$Oxycontin == "true"), ]) #only 4 of these
-# nrow(DF[which(DF$SSAGA_Mj_Ab_Dep == 1), ]) #99 constant weed users
-# nrow(DF[which(DF$SSAGA_Alc_D4_Dp_Dx == 5), ]) #61 Alc dependent
-
-#lets do THC dependence
+#lets do MJ
 p1 <- DF %>% 
   ggplot(aes(x = coupling)) +
-  geom_density(aes(fill = as.factor(SSAGA_Mj_Ab_Dep)), alpha = .5) +
-  scale_fill_discrete("Marijuana Dependence") +
+  geom_density(aes(fill = as.factor(mari.user)), alpha = .5) +
+  scale_fill_discrete("Marijuana use") +
   labs(x = "Coupling Factor", 
        y = "Density", 
-       title = "Marijuana Dependence") +
+       title = "Marijuana USE") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 
 #lets do Alc dependence
 p2 <- DF %>% 
   ggplot(aes(x = coupling)) +
-  geom_density(aes(fill = as.factor(SSAGA_Alc_D4_Dp_Dx)), alpha = .5) +
-  scale_fill_discrete("Alcohol Dependence") +
+  geom_density(aes(fill = as.factor(Alc)), alpha = .5) +
+  scale_fill_discrete("Alcohol Use") +
   labs(x = "Coupling Factor", 
        y = "Density", 
-       title = "Alcohol Dependence") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
-
-
-#alc abuse
-p3 <- DF %>% 
-  ggplot(aes(x = coupling)) +
-  geom_density(aes(fill = as.factor(SSAGA_Alc_D4_Ab_Dx)), alpha = .5) +
-  scale_fill_discrete("Alcohol Abuse") +
-  labs(x = "Coupling Factor", 
-       y = "Density", 
-       title = "Alcohol Abuse") +
+       title = "Alcohol Use") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
 #lets do all other hard drugs combined since their aren't many in each
-p4 <- DF %>% 
-  mutate(Hard_drugs = ifelse(Cocaine == "true" | MethAmphetamine == "true" |
-                               Oxycontin == "true" | Opiates == "true" |
-                               Amphetamines == "true", 1, 0)) %>% 
-  select(Cocaine, MethAmphetamine, Oxycontin, Opiates, Amphetamines, Hard_drugs, coupling) %>% 
+p3 <- DF %>% 
   ggplot(aes(x = coupling)) +
-  geom_density(aes(fill = as.factor(Hard_drugs)), alpha = .5) +
+  geom_density(aes(fill = as.factor(hard.drug)), alpha = .5) +
   scale_fill_discrete("Hard Drug Use") +
   labs(x = "Coupling Factor", 
        y = "Density", 
@@ -70,7 +42,8 @@ p4 <- DF %>%
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
 title <- textGrob("FC and SC Coupling Factor & Substance Abuse", gp = gpar(fontface = "bold", cex = 1.5))
-plot1 <- grid.arrange(p1, p2, p3, p4, nrow = 2, 
-                      top = title)
+m <- matrix(c(1, 1, 2, 2, 3, 4, 4, 5), ncol = 4, byrow = T)
+plot <- grid.arrange(p1, p2, grid::nullGrob(), p3, grid::nullGrob(), 
+                     layout_matrix = m)
 
-ggsave("prelim_graphics/Drug.Histograms.png", plot1)
+ggsave("prelim_graphics/Drug.Histograms.png", plot)
