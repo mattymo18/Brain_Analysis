@@ -11,10 +11,10 @@ DF <- read.csv("derived_data/model_data_TNPCA_FC.csv")
 p1 <- DF %>% 
   ggplot(aes(x = coupling)) +
   geom_density(aes(fill = as.factor(mari.user)), alpha = .5) +
-  scale_fill_discrete("Marijuana use") +
+  scale_fill_discrete("Marijuana Use") +
   labs(x = "Coupling Factor", 
        y = "Density", 
-       title = "Marijuana USE") +
+       title = "Marijuana Use") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 
@@ -46,4 +46,4 @@ m <- matrix(c(1, 1, 2, 2, 3, 4, 4, 5), ncol = 4, byrow = T)
 plot <- grid.arrange(p1, p2, grid::nullGrob(), p3, grid::nullGrob(), 
                      layout_matrix = m)
 
-ggsave("prelim_graphics/Drug.Histograms.png", plot)
+ggsave("prelim_graphics/Drug_Histograms.png", plot)
